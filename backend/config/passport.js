@@ -1,7 +1,12 @@
 const passport = require('passport');
 const GitHubStrategy = require('passport-github2').Strategy;
 const User = require('../models/User');
+const jwt = require('jsonwebtoken');
 
+/**
+ * GitHub OAuth 2.0 Strategy Configuration
+ * Handles GitHub authentication and user creation/update
+ */
 passport.use(
   new GitHubStrategy(
     {
@@ -11,42 +16,84 @@ passport.use(
     },
     async (accessToken, refreshToken, profile, done) => {
       try {
-        const githubUsername = profile.username;
+        const githubId = profile.id;
+        const email = profile.emails?.[0]?.value;
+        const username = profile.username || `github_${githubId}`;
 
-        // Find user by email OR create fallback (depending on your flow)
-        let user = await User.findOne({ github_username: githubUsername });
+        // Try to find user by GitHub ID
+        let user = await User.findOne({ githubId });
 
         if (!user) {
-          // If user exists from normal signup, update it
-          user = await User.findOne({ email: profile.emails?.[0]?.value });
+          // Check if user exists with this email (from previous signup)
+          if (email) {
+            user = await User.findOne({ email });
+          }
 
-          if (user) {
-            user.github_username = githubUsername;
-            user.github_access_token = accessToken;
-            user.github_verified = true;
-            user.github_verified_at = new Date();
+          if (!user) {
+            // Create new user
+            user = await User.create({
+              username: username,
+              email: email || `${username}@github.local`,
+              githubId: githubId,
+              githubProfile: {
+                name: profile.displayName,
+                avatar_url: profile.photos?.[0]?.value,
+                bio: profile._json?.bio,
+              },
+              role: 'user', // Default role
+              isActive: true,
+            });
+          } else {
+            // Update existing user with GitHub info
+            user.githubId = githubId;
+            user.githubProfile = {
+              name: profile.displayName,
+              avatar_url: profile.photos?.[0]?.value,
+              bio: profile._json?.bio,
+            };
             await user.save();
           }
         } else {
-          // Update token if already exists
-          user.github_access_token = accessToken;
-          user.github_verified = true;
-          user.github_verified_at = new Date();
+          // Update GitHub profile if user already exists
+          user.githubProfile = {
+            name: profile.displayName,
+            avatar_url: profile.photos?.[0]?.value,
+            bio: profile._json?.bio,
+          };
           await user.save();
         }
 
         return done(null, user);
       } catch (err) {
+        console.error('GitHub Strategy Error:', err);
         return done(err, null);
       }
     }
   )
 );
 
-// Optional (not required if using JWT only)
+/**
+ * Serialize user for session
+ * Stores user ID in session
+ */
 passport.serializeUser((user, done) => {
-  done(null, user.id);
+  done(null, user._id);
 });
+
+/**
+ * Deserialize user from session
+ * Retrieves user by ID from session
+ */
+passport.deserializeUser(async (id, done) => {
+  try {
+    const user = await User.findById(id);
+    done(null, user);
+  } catch (err) {
+    done(err, null);
+  }
+});
+
+module.exports = passport;
 
 passport.deserializeUser(async (id, done) => {
   try {

@@ -1,27 +1,90 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 
-const UserSchema = new mongoose.Schema({
-  username: { type: String, required: true, trim: true },
-  email: { type: String, required: true, unique: true, lowercase: true },
-  password: { type: String, required: true, minlength: 8 },
-  role: { type: String, enum: ['candidate', 'recruiter'], required: true },
+const userSchema = new mongoose.Schema(
+  {
+    username: {
+      type: String,
+      required: [true, 'Please provide a username'],
+      unique: true,
+      trim: true,
+      minlength: [3, 'Username must be at least 3 characters'],
+    },
+    email: {
+      type: String,
+      required: [true, 'Please provide an email'],
+      unique: true,
+      lowercase: true,
+      match: [
+        /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/,
+        'Please provide a valid email',
+      ],
+    },
+    password: {
+      type: String,
+      minlength: [6, 'Password must be at least 6 characters'],
+      select: false, // Don't return password by default
+    },
+    role: {
+      type: String,
+      enum: {
+        values: ['user', 'admin'],
+        message: 'Role must be either user or admin',
+      },
+      default: 'user',
+    },
+    githubId: {
+      type: String,
+      unique: true,
+      sparse: true,
+    },
+    githubProfile: {
+      type: Object,
+      default: null,
+    },
+    isActive: {
+      type: Boolean,
+      default: true,
+    },
+    createdAt: {
+      type: Date,
+      default: Date.now,
+    },
+    updatedAt: {
+      type: Date,
+      default: Date.now,
+    },
+  },
+  { timestamps: true }
+);
 
-  github_username: { type: String, default: null },
-  github_access_token: { type: String, default: null },
-  github_verified: { type: Boolean, default: false },
-  github_verified_at: { type: Date, default: null }
+// Hash password before saving (only if password is modified)
+userSchema.pre('save', async function (next) {
+  if (!this.isModified('password')) {
+    next();
+    return;
+  }
 
-}, { timestamps: true });
-
-UserSchema.pre('save', async function(next) {
-  if (!this.isModified('password')) return next();
-  this.password = await bcrypt.hash(this.password, 12);
-  next();
+  try {
+    const salt = await bcrypt.genSalt(10);
+    this.password = await bcrypt.hash(this.password, salt);
+    next();
+  } catch (error) {
+    next(error);
+  }
 });
 
-UserSchema.methods.comparePassword = function(plain) {
-  return bcrypt.compare(plain, this.password);
+// Method to compare passwords
+userSchema.methods.matchPassword = async function (enteredPassword) {
+  return await bcrypt.compare(enteredPassword, this.password);
 };
 
-module.exports = mongoose.model('User', UserSchema);
+// Method to remove sensitive data
+userSchema.methods.toJSON = function () {
+  const obj = this.toObject();
+  delete obj.password;
+  delete obj.githubId;
+  return obj;
+};
+
+module.exports = mongoose.model('User', userSchema);
