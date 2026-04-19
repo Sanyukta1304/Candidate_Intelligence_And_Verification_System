@@ -30,22 +30,28 @@ passport.use(
           }
 
           if (!user) {
-            // Create new user
+            // Create new user with GitHub info
             user = await User.create({
               username: username,
               email: email || `${username}@github.local`,
               githubId: githubId,
+              github_access_token: accessToken,
+              github_verified: true,
+              github_verified_at: new Date(),
               githubProfile: {
                 name: profile.displayName,
                 avatar_url: profile.photos?.[0]?.value,
                 bio: profile._json?.bio,
               },
-              role: 'user', // Default role
+              role: 'candidate', // Default role for GitHub OAuth is candidate
               isActive: true,
             });
           } else {
             // Update existing user with GitHub info
             user.githubId = githubId;
+            user.github_access_token = accessToken;
+            user.github_verified = true;
+            user.github_verified_at = new Date();
             user.githubProfile = {
               name: profile.displayName,
               avatar_url: profile.photos?.[0]?.value,
@@ -55,6 +61,9 @@ passport.use(
           }
         } else {
           // Update GitHub profile if user already exists
+          user.github_access_token = accessToken;
+          user.github_verified = true;
+          user.github_verified_at = new Date();
           user.githubProfile = {
             name: profile.displayName,
             avatar_url: profile.photos?.[0]?.value,
@@ -84,17 +93,6 @@ passport.serializeUser((user, done) => {
  * Deserialize user from session
  * Retrieves user by ID from session
  */
-passport.deserializeUser(async (id, done) => {
-  try {
-    const user = await User.findById(id);
-    done(null, user);
-  } catch (err) {
-    done(err, null);
-  }
-});
-
-module.exports = passport;
-
 passport.deserializeUser(async (id, done) => {
   try {
     const user = await User.findById(id);

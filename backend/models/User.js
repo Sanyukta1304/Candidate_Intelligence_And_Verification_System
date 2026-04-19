@@ -28,10 +28,10 @@ const userSchema = new mongoose.Schema(
     role: {
       type: String,
       enum: {
-        values: ['user', 'admin'],
-        message: 'Role must be either user or admin',
+        values: ['candidate', 'recruiter'],
+        message: 'Role must be either candidate or recruiter',
       },
-      default: 'user',
+      default: 'candidate',
     },
     githubId: {
       type: String,
@@ -40,6 +40,19 @@ const userSchema = new mongoose.Schema(
     },
     githubProfile: {
       type: Object,
+      default: null,
+    },
+    github_access_token: {
+      type: String,
+      default: null,
+      // In production, this should be encrypted
+    },
+    github_verified: {
+      type: Boolean,
+      default: false,
+    },
+    github_verified_at: {
+      type: Date,
       default: null,
     },
     isActive: {
@@ -59,18 +72,16 @@ const userSchema = new mongoose.Schema(
 );
 
 // Hash password before saving (only if password is modified)
-userSchema.pre('save', async function (next) {
+userSchema.pre('save', async function () {
   if (!this.isModified('password')) {
-    next();
     return;
   }
 
   try {
     const salt = await bcrypt.genSalt(10);
     this.password = await bcrypt.hash(this.password, salt);
-    next();
   } catch (error) {
-    next(error);
+    throw error;
   }
 });
 

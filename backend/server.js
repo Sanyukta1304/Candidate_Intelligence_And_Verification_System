@@ -1,16 +1,18 @@
 /**
  * ========================================
- * EXAMPLE SERVER INTEGRATION FILE
+ * CIVS BACKEND SERVER
  * ========================================
- * Copy this code into your main server.js or app.js file
- * This shows how to integrate all authentication components
+ * Main entry point for the Candidate Intelligence & Verification System
+ * Handles authentication, authorization, and API routing
  */
 
 const express = require('express');
-const mongoose = require('mongoose');
 const cors = require('cors');
 const passport = require('passport');
 require('dotenv').config();
+
+// Import database connection
+const connectDB = require('./config/db');
 
 // Import authentication routes
 const authRoutes = require('./routes/auth.routes');
@@ -59,10 +61,7 @@ app.use(passport.session());
  * ========================================
  */
 
-mongoose
-  .connect(process.env.MONGO_URI)
-  .then(() => console.log('✅ MongoDB Connected'))
-  .catch((err) => console.error('❌ MongoDB Error:', err));
+connectDB();
 
 /**
  * ========================================

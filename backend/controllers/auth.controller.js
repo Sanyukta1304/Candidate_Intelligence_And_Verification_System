@@ -18,7 +18,7 @@ const generateToken = (userId, role) => {
  * @desc    Register a new user
  * @access  Public
  */
-const register = async (req, res) => {
+const register = async (req, res, next) => {
   try {
     const { username, email, password, passwordConfirm, role } = req.body;
 
@@ -54,7 +54,7 @@ const register = async (req, res) => {
       username,
       email,
       password,
-      role: role || 'user', // Default role is 'user'
+      role: role && ['candidate', 'recruiter'].includes(role) ? role : 'candidate', // Default role is 'candidate'
     });
 
     // Generate token
@@ -86,7 +86,7 @@ const register = async (req, res) => {
  * @desc    Login user
  * @access  Public
  */
-const login = async (req, res) => {
+const login = async (req, res, next) => {
   try {
     const { email, password } = req.body;
 
@@ -155,7 +155,7 @@ const login = async (req, res) => {
  * @desc    Get current logged-in user
  * @access  Private
  */
-const getCurrentUser = async (req, res) => {
+const getCurrentUser = async (req, res, next) => {
   try {
     const user = await User.findById(req.user.id);
 
@@ -174,6 +174,7 @@ const getCurrentUser = async (req, res) => {
         email: user.email,
         role: user.role,
         isActive: user.isActive,
+        github_verified: user.github_verified,
         createdAt: user.createdAt,
       },
     });
@@ -192,7 +193,7 @@ const getCurrentUser = async (req, res) => {
  * @desc    Logout user (client-side token deletion)
  * @access  Private
  */
-const logout = (req, res) => {
+const logout = (req, res, next) => {
   return res.status(200).json({
     success: true,
     message: 'Logout successful. Please delete the token from client side.',
