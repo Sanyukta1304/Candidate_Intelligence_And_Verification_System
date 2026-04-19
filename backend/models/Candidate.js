@@ -29,6 +29,10 @@ const CandidateSchema = new mongoose.Schema({
   projects_score: { type: Number, default: 0 },
   total_score: { type: Number, default: 0 },
 
+  github_username: { type: String, default: null },
+github_access_token: { type: String, default: null },
+github_verified: { type: Boolean, default: false },
+
   tier: {
     type: String,
     enum: ['High Potential', 'Moderate', 'Needs Improvement'],

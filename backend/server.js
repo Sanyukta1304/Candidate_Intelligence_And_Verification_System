@@ -15,6 +15,9 @@ require('dotenv').config();
 // Import authentication routes
 const authRoutes = require('./routes/auth.routes');
 
+const candidateRoutes = require('./routes/candidate.routes');
+app.use('/api/candidate', candidateRoutes);
+
 // Import passport configuration
 require('./config/passport');
 
