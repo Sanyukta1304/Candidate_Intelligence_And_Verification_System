@@ -2,8 +2,6 @@
  * ========================================
  * CIVS BACKEND SERVER
  * ========================================
- * Main entry point for the Candidate Intelligence & Verification System
- * Handles authentication, authorization, and API routing
  */
 
 const express = require('express');
@@ -14,16 +12,16 @@ require('dotenv').config();
 // Import database connection
 const connectDB = require('./config/db');
 
-// Import authentication routes
-const authRoutes = require('./routes/auth.routes');
-
-const candidateRoutes = require('./routes/candidate.routes');
-app.use('/api/candidate', candidateRoutes);
-
 // Import passport configuration
 require('./config/passport');
 
+// 🔥 CREATE APP FIRST
 const app = express();
+
+// Import routes
+const authRoutes = require('./routes/auth.routes');
+const candidateRoutes = require('./routes/candidate.routes');
+const recruiterRoutes = require('./routes/recruiter.routes'); // ✅ ADDED
 
 /**
  * ========================================
@@ -80,10 +78,11 @@ app.get('/health', (req, res) => {
 // Auth routes
 app.use('/api/auth', authRoutes);
 
-// Other routes here...
-// app.use('/api/users', userRoutes);
-// app.use('/api/projects', projectRoutes);
-// etc.
+// Candidate routes
+app.use('/api/candidate', candidateRoutes);
+
+// 🔥 YOUR MODULE (Recruiter)
+app.use('/api/recruiter', recruiterRoutes);
 
 /**
  * ========================================
