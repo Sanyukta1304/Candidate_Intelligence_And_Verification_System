@@ -30,8 +30,10 @@ const CandidateSchema = new mongoose.Schema({
   total_score: { type: Number, default: 0 },
 
   github_username: { type: String, default: null },
-github_access_token: { type: String, default: null },
-github_verified: { type: Boolean, default: false },
+  github_access_token: { type: String, default: null },
+  github_verified: { type: Boolean, default: false },
+  github_verified_at: { type: Date, default: null },
+  github_verification_locked: { type: Boolean, default: false },
 
   tier: {
     type: String,
