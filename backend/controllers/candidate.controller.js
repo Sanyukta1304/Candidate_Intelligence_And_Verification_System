@@ -1,3 +1,4 @@
+const User = require('../models/User');
 const Candidate = require('../models/Candidate');
 const ResumeScore = require('../models/ResumeScore');
 const { scoreResume } = require('../services/atsScorer');
@@ -71,7 +72,15 @@ exports.updateProfile = async (req, res) => {
  */
 exports.verifyGithub = async (req, res) => {
   try {
-    const user = req.user;
+    // ✅ FETCH FRESH USER DATA FROM DATABASE (not from old JWT token)
+    const user = await User.findById(req.user.id);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
 
     // Check if user has authenticated with GitHub via OAuth
     if (!user.github_verified || !user.github_access_token) {

@@ -100,14 +100,19 @@ Expected Response (200):
 **Purpose**: Initialize candidate profile before GitHub verification
 
 ```
-POST http://localhost:5000/api/candidate/profile
+PUT http://localhost:5000/api/candidate/profile
 Headers:
   Authorization: Bearer <TOKEN_FROM_TEST_2>
   Content-Type: application/json
 
 {
   "about": "Software engineer passionate about coding",
-  "skills": ["JavaScript", "Node.js", "React"]
+  "skills": [
+    { "name": "JavaScript" },
+    { "name": "Node.js" },
+    { "name": "React" },
+    { "name": "Python" }
+  ]
 }
 
 Expected Response (200):

@@ -48,11 +48,20 @@ const CandidateSchema = new mongoose.Schema({
 
 }, { timestamps: true });
 
-CandidateSchema.pre('save', function(next) {
-  if (this.total_score >= 75) this.tier = 'High Potential';
-  else if (this.total_score >= 50) this.tier = 'Moderate';
-  else this.tier = 'Needs Improvement';
-  next();
+CandidateSchema.pre('save', async function() {
+  try {
+    if (this.total_score >= 75) {
+      this.tier = 'High Potential';
+    } else if (this.total_score >= 50) {
+      this.tier = 'Moderate';
+    } else {
+      this.tier = 'Needs Improvement';
+    }
+    // No next() needed - async functions return promises
+  } catch (err) {
+    console.error('Error in Candidate pre-save hook:', err);
+    throw err; // Rethrow to stop save
+  }
 });
 
 module.exports = mongoose.model('Candidate', CandidateSchema);

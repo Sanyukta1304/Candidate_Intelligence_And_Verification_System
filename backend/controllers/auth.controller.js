@@ -1,4 +1,5 @@
 const User = require('../models/User');
+const Candidate = require('../models/Candidate');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 
@@ -56,6 +57,19 @@ const register = async (req, res, next) => {
       password,
       role: role && ['candidate', 'recruiter'].includes(role) ? role : 'candidate', // Default role is 'candidate'
     });
+
+    // ✅ AUTO-CREATE CANDIDATE PROFILE IF ROLE IS CANDIDATE
+    if (user.role === 'candidate') {
+      try {
+        await Candidate.create({
+          user_id: user._id,
+          // Other fields will have defaults from schema
+        });
+      } catch (candidateError) {
+        console.error('Candidate profile creation error:', candidateError);
+        // Don't fail the registration if candidate profile creation fails
+      }
+    }
 
     // Generate token
     const token = generateToken(user._id, user.role);
