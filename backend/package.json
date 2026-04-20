@@ -18,6 +18,7 @@
   "license": "ISC",
   "description": "MERN Stack Backend with JWT Authentication & Role-Based Access Control",
   "dependencies": {
+    "axios": "^1.15.1",
     "bcryptjs": "^3.0.3",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
