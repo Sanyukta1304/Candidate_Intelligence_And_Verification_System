@@ -14,6 +14,13 @@ import ProfilePage from "./pages/candidate/ProfilePage";
 import ProfileEditPage from "./pages/candidate/ProfileEditPage";
 import NotificationsPage from "./pages/NotificationsPage";
 
+// Recruiter Pages
+import RecruiterDashboardPage from "./pages/recruiter/RecruiterDashboardPage";
+import TalentSearchPage from "./pages/recruiter/TalentSearchPage";
+import StarredCandidatesPage from "./pages/recruiter/StarredCandidatesPage";
+import RecruiterProfilePage from "./pages/recruiter/RecruiterProfilePage";
+import RecruiterCandidateViewPage from "./pages/recruiter/RecruiterCandidateViewPage";
+
 function App() {
   return (
     <Router>
@@ -33,6 +40,13 @@ function App() {
             <Route path="/profile" element={<ProfilePage />} />
             <Route path="/profile/edit" element={<ProfileEditPage />} />
             <Route path="/notifications" element={<NotificationsPage />} />
+
+            {/* Recruiter Routes */}
+            <Route path="/recruiter/dashboard" element={<RecruiterDashboardPage />} />
+            <Route path="/recruiter/search" element={<TalentSearchPage />} />
+            <Route path="/recruiter/starred" element={<StarredCandidatesPage />} />
+            <Route path="/recruiter/profile" element={<RecruiterProfilePage />} />
+            <Route path="/recruiter/candidate/:candidateId" element={<RecruiterCandidateViewPage />} />
 
             <Route path="*" element={<Navigate to="/" replace />} />
 

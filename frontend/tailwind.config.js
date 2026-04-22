@@ -23,6 +23,25 @@ export default {
           800: "#1e293b",
           900: "#0f172a",
         },
+        // Badge colors for tier ratings
+        badge: {
+          highPotential: {
+            bg: "#d1fae5",  // emerald-100
+            text: "#047857", // emerald-800
+          },
+          moderate: {
+            bg: "#fed7aa",   // orange-100
+            text: "#92400e", // orange-800
+          },
+          entryLevel: {
+            bg: "#dbeafe",   // blue-100
+            text: "#1e40af", // blue-800
+          },
+          specialist: {
+            bg: "#e9d5ff",   // purple-100
+            text: "#7e22ce", // purple-800
+          },
+        },
       },
       boxShadow: {
         soft: "0 2px 8px rgba(0, 0, 0, 0.06)",
