@@ -8,7 +8,7 @@ const path = require('path');
 // GET PROFILE
 exports.getProfile = async (req, res) => {
   try {
-    const candidate = await Candidate.findOne({ user_id: req.user._id });
+    const candidate = await Candidate.findOne({ user_id: req.user.id });
     
     if (!candidate) {
       return res.status(404).json({
@@ -36,11 +36,22 @@ exports.updateProfile = async (req, res) => {
       });
     }
 
-    // Get existing candidate to check GitHub verification lock
-    const candidate = await Candidate.findOne({ user_id: req.user._id });
+    // Get existing candidate
+    let candidate = await Candidate.findOne({ user_id: req.user.id });
+    
+    // ✅ If no candidate exists, create one with user_id (prevents null user_id)
+    if (!candidate) {
+      const newCandidate = await Candidate.create({
+        user_id: req.user.id,
+        education,
+        about,
+        skills
+      });
+      return res.json({ success: true, data: newCandidate });
+    }
     
     // Prevent modification of GitHub-related fields if locked
-    if (candidate && candidate.github_verification_locked) {
+    if (candidate.github_verification_locked) {
       // Ensure GitHub fields cannot be modified once locked
       if (req.body.github_verified !== undefined || 
           req.body.github_username !== undefined || 
@@ -53,10 +64,11 @@ exports.updateProfile = async (req, res) => {
       }
     }
 
+    // ✅ Update existing candidate (NO upsert - prevents duplicate with null user_id)
     const updated = await Candidate.findOneAndUpdate(
-      { user_id: req.user._id },
+      { user_id: req.user.id },
       { education, about, skills, last_scored: new Date() },
-      { new: true, upsert: true }
+      { returnDocument: 'after' }
     );
 
     res.json({ success: true, data: updated });
@@ -158,8 +170,28 @@ exports.uploadResume = async (req, res, next) => {
 
     filePath = req.file.path;
 
+    // ✅ Validate file type - only PDF and DOCX allowed
+    const allowedMimeTypes = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+    const allowedExtensions = ['.pdf', '.docx'];
+    
+    const fileName = req.file.originalname.toLowerCase();
+    const fileMimeType = req.file.mimetype.toLowerCase();
+    const fileExtension = fileName.substring(fileName.lastIndexOf('.'));
+    
+    if (!allowedMimeTypes.includes(fileMimeType) || !allowedExtensions.includes(fileExtension)) {
+      // Clean up file before returning error
+      await fs.unlink(filePath).catch(() => {});
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid file format. Only PDF and DOCX files are accepted.',
+        details: {
+          received: `${fileExtension || 'unknown'} (${fileMimeType || 'unknown'})`
+        }
+      });
+    }
+
     // Verify candidate exists and GitHub is verified AND locked
-    let candidate = await Candidate.findOne({ user_id: req.user._id });
+    let candidate = await Candidate.findOne({ user_id: req.user.id });
 
     if (!candidate) {
       // Clean up file before returning error
@@ -192,7 +224,7 @@ exports.uploadResume = async (req, res, next) => {
     }
 
     // Score the resume using ATS Engine
-    console.log(`[Resume Upload] Scoring resume for user ${req.user._id}`);
+    console.log(`[Resume Upload] Scoring resume for user ${req.user.id}`);
     const scoreResult = await scoreResume(filePath);
 
     // Save score to ResumeScore collection
@@ -203,7 +235,7 @@ exports.uploadResume = async (req, res, next) => {
         candidate_id: candidate._id,
         parse_success: scoreResult.parse_success !== false
       },
-      { new: true, upsert: true }
+      { returnDocument: 'after', upsert: true }
     );
 
     // Update candidate with resume metadata
@@ -254,7 +286,7 @@ exports.uploadResume = async (req, res, next) => {
 // GET RESUME SCORE
 exports.getResumeScore = async (req, res) => {
   try {
-    const candidate = await Candidate.findOne({ user_id: req.user._id });
+    const candidate = await Candidate.findOne({ user_id: req.user.id });
 
     if (!candidate) {
       return res.status(404).json({

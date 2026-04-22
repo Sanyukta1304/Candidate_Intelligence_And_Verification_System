@@ -1,6 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const passport = require('passport');
+const User = require('../models/User');
+const Candidate = require('../models/Candidate');
 const {
   register,
   login,
@@ -62,6 +64,7 @@ router.get(
  */
 
 // Initiate GitHub OAuth login
+// GitHub will match email to link to existing user
 router.get(
   '/github',
   passport.authenticate('github', {
@@ -69,19 +72,21 @@ router.get(
   })
 );
 
-// GitHub OAuth callback
+// GitHub OAuth callback with email-based linking
 router.get(
   '/github/callback',
-  passport.authenticate('github', { failureRedirect: '/login' }),
-  (req, res) => {
+  passport.authenticate('github', { failureRedirect: '/login', session: true }),
+  async (req, res) => {
     try {
-      // User is authenticated, generate JWT
-      const token = generateToken(req.user._id, req.user.role);
+      const githubUser = req.user;
 
-      // Redirect to frontend with token
-      // You should store this token in localStorage on the client
+      // ✅ GitHub is already linked via email matching in Passport strategy
+      // Generate token for the authenticated user
+      const token = generateToken(githubUser._id, githubUser.role);
+
+      // Redirect with token
       res.redirect(
-        `${process.env.CLIENT_URL}/auth/github/callback?token=${token}&userId=${req.user._id}`
+        `${process.env.CLIENT_URL}/auth/github/callback?token=${token}&userId=${githubUser._id}`
       );
     } catch (error) {
       console.error('GitHub callback error:', error);
