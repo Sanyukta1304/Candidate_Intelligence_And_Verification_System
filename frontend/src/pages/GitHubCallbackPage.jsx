@@ -2,15 +2,7 @@ import React, { useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
-/**
- * GitHub OAuth Callback Handler
- * This page handles the redirect from GitHub OAuth flow
- * 
- * Expected URL pattern:
- * - Success: /auth/github/callback?token=xxx&user=xxx
- * - Error: /auth/github/callback?error=xxx
- */
-export const GitHubCallbackPage = () => {
+const GitHubCallbackPage = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { login, setAuthError } = useAuth();
@@ -18,19 +10,16 @@ export const GitHubCallbackPage = () => {
   useEffect(() => {
     const handleCallback = async () => {
       try {
-        // Get parameters from URL
         const token = searchParams.get('token');
         const userStr = searchParams.get('user');
         const error = searchParams.get('error');
 
-        // Handle errors
         if (error) {
           setAuthError(`GitHub authentication failed: ${error}`);
           navigate('/login', { replace: true });
           return;
         }
 
-        // Handle success
         if (token && userStr) {
           try {
             const user = JSON.parse(userStr);
@@ -62,3 +51,5 @@ export const GitHubCallbackPage = () => {
     </div>
   );
 };
+
+export default GitHubCallbackPage;
