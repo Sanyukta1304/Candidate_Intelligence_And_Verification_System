@@ -33,6 +33,19 @@ const recruiterRoutes = require('./routes/recruiter.routes'); // ✅ ADDED
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// 🔍 DEBUG: Log incoming requests
+app.use((req, res, next) => {
+  if (req.method === 'POST' || req.method === 'PUT') {
+    console.log(`📨 ${req.method} ${req.path}`);
+    console.log('Headers:', {
+      'content-type': req.headers['content-type'],
+      'content-length': req.headers['content-length']
+    });
+    console.log('Body:', req.body);
+  }
+  next();
+});
+
 // CORS
 app.use(
   cors({

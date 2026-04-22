@@ -2,26 +2,35 @@ const express = require('express');
 const router = express.Router();
 
 const recruiterController = require('../controllers/recruiter.controller');
+const { verifyToken } = require('../middleware/auth');
 
-// ✅ TEST ROUTE (ADD THIS)
+// ✅ TEST ROUTE
 router.get('/test', (req, res) => {
   res.send("Recruiter API working ✅");
 });
 
-// 🔍 Get candidates (search + filter)
-router.get('/candidates', recruiterController.getCandidates);
+// ========================================
+// 👤 PROFILE ROUTES (PROTECTED)
+// ========================================
+router.get('/profile', verifyToken, recruiterController.getProfile);
+router.put('/profile', verifyToken, recruiterController.updateProfile);
 
-// 👁️ View candidate (track view)
-router.get('/candidates/:id', recruiterController.getCandidateById);
+// ========================================
+// 🔍 CANDIDATE SEARCH & VIEW (PROTECTED)
+// ========================================
+router.get('/candidates', verifyToken, recruiterController.getCandidates);
+router.get('/candidates/:id', verifyToken, recruiterController.getCandidateById);
 
-// ⭐ Star / Unstar
-router.post('/star/:candidateId', recruiterController.starCandidate);
-router.delete('/star/:candidateId', recruiterController.unstarCandidate);
+// ========================================
+// ⭐ STAR / UNSTAR (PROTECTED)
+// ========================================
+router.post('/star/:candidateId', verifyToken, recruiterController.starCandidate);
+router.delete('/star/:candidateId', verifyToken, recruiterController.unstarCandidate);
 
-// ⭐ Get starred list
-router.get('/starred', recruiterController.getStarred);
-
-// 📊 Dashboard stats
-router.get('/stats', recruiterController.getStats);
+// ========================================
+// 📊 DASHBOARD (PROTECTED)
+// ========================================
+router.get('/starred', verifyToken, recruiterController.getStarred);
+router.get('/stats', verifyToken, recruiterController.getStats);
 
 module.exports = router;
