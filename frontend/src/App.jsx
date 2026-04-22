@@ -1,14 +1,7 @@
 import React from "react";
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 
-import { AuthProvider } from "./contexts/AuthContext";
-import { Navbar } from "./components/Navbar";
-
-import { HomePage } from "./pages/HomePage";
-import { LoginPage } from "./pages/LoginPage";
-import { RegisterPage } from "./pages/RegisterPage";
-import { GitHubCallbackPage } from "./pages/GitHubCallbackPage";
-
+// Pages
 import DashboardPage from "./pages/DashboardPage";
 import ProfilePage from "./pages/candidate/ProfilePage";
 import ProfileEditPage from "./pages/candidate/ProfileEditPage";
@@ -23,19 +16,22 @@ import RecruiterCandidateViewPage from "./pages/recruiter/RecruiterCandidateView
 
 function App() {
   return (
-    <Router>
-      <AuthProvider>
+    <BrowserRouter>
+      <Routes>
 
-        <Navbar />
+        {/* Default route */}
+        <Route path="/" element={<Navigate to="/dashboard" />} />
 
-        <main className="min-h-[calc(100vh-64px)]">
-          <Routes>
+        {/* Main Pages */}
+        <Route path="/dashboard" element={<DashboardPage />} />
+        <Route path="/profile" element={<ProfilePage />} />
+        <Route path="/edit-profile" element={<ProfileEditPage />} />
+        <Route path="/notifications" element={<NotificationsPage />} />
 
-            <Route path="/" element={<HomePage />} />
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/register" element={<RegisterPage />} />
-            <Route path="/auth/github/callback" element={<GitHubCallbackPage />} />
+        {/* Fallback */}
+        <Route path="*" element={<h2 style={{ padding: "20px" }}>Page Not Found</h2>} />
 
+<<<<<<< HEAD
             <Route path="/dashboard" element={<DashboardPage />} />
             <Route path="/profile" element={<ProfilePage />} />
             <Route path="/profile/edit" element={<ProfileEditPage />} />
@@ -55,6 +51,10 @@ function App() {
 
       </AuthProvider>
     </Router>
+=======
+      </Routes>
+    </BrowserRouter>
+>>>>>>> 996b755ed1bb6a11233e04b926a21af9f6d3bb42
   );
 }
 

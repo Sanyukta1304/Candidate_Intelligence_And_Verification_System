@@ -1,15 +1,10 @@
-import React from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
+import { Link, useLocation } from "react-router-dom";
 
-export const Navbar = () => {
-  const { isAuthenticated, user, logout } = useAuth();
-  const navigate = useNavigate();
+const Navbar = () => {
+  const location = useLocation();
 
-  const handleLogout = () => {
-    logout();
-    navigate('/');
-  };
+  const isActive = (path) =>
+    location.pathname === path ? "text-black font-semibold" : "text-gray-500";
 
   const getDashboardLink = () => {
     if (user?.role === 'recruiter') {
@@ -19,16 +14,9 @@ export const Navbar = () => {
   };
 
   return (
-    <nav className="bg-white shadow-soft sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
-          {/* Logo */}
-          <Link to="/" className="flex-shrink-0">
-            <div className="text-2xl font-bold text-primary-dark">
-              CredVerify
-            </div>
-          </Link>
+    <div className="flex justify-between items-center px-10 py-4 border-b bg-white">
 
+<<<<<<< HEAD
           {/* Center Navigation (for authenticated users) */}
           {isAuthenticated && (
             <div className="hidden md:flex items-center gap-6">
@@ -105,7 +93,27 @@ export const Navbar = () => {
             )}
           </div>
         </div>
+=======
+      <h1 className="text-lg font-semibold">CredVerify</h1>
+
+      <div className="flex gap-8">
+        <Link to="/dashboard" className={isActive("/dashboard")}>Dashboard</Link>
+        <Link to="/profile" className={isActive("/profile")}>Profile</Link>
+        <Link to="/notifications" className={isActive("/notifications")}>
+          Notifications <span className="text-red-500 text-sm">(3)</span>
+        </Link>
+>>>>>>> 996b755ed1bb6a11233e04b926a21af9f6d3bb42
       </div>
-    </nav>
+
+      <div className="flex items-center gap-3">
+        <div className="w-8 h-8 bg-blue-500 text-white flex items-center justify-center rounded-full">
+          JD
+        </div>
+        <button className="text-gray-600">Logout</button>
+      </div>
+
+    </div>
   );
 };
+
+export default Navbar;

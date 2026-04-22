@@ -3,7 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { authService } from '../api/authService';
 
-export const LoginPage = () => {
+const LoginPage = () => {
   const navigate = useNavigate();
   const { login, setAuthError, error } = useAuth();
   const [loading, setLoading] = useState(false);
@@ -142,3 +142,5 @@ export const LoginPage = () => {
     </div>
   );
 };
+
+export default LoginPage;

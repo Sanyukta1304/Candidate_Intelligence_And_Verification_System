@@ -2,7 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
-export const HomePage = () => {
+const HomePage = () => {
   const { isAuthenticated } = useAuth();
 
   return (
@@ -80,3 +80,5 @@ export const HomePage = () => {
     </div>
   );
 };
+
+export default HomePage;
