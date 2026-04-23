@@ -18,7 +18,6 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-
         {/* Default route */}
         <Route path="/" element={<Navigate to="/dashboard" />} />
 
@@ -28,33 +27,17 @@ function App() {
         <Route path="/edit-profile" element={<ProfileEditPage />} />
         <Route path="/notifications" element={<NotificationsPage />} />
 
+        {/* Recruiter Routes */}
+        <Route path="/recruiter/dashboard" element={<RecruiterDashboardPage />} />
+        <Route path="/recruiter/search" element={<TalentSearchPage />} />
+        <Route path="/recruiter/starred" element={<StarredCandidatesPage />} />
+        <Route path="/recruiter/profile" element={<RecruiterProfilePage />} />
+        <Route path="/recruiter/candidate/:candidateId" element={<RecruiterCandidateViewPage />} />
+
         {/* Fallback */}
-        <Route path="*" element={<h2 style={{ padding: "20px" }}>Page Not Found</h2>} />
-
-<<<<<<< HEAD
-            <Route path="/dashboard" element={<DashboardPage />} />
-            <Route path="/profile" element={<ProfilePage />} />
-            <Route path="/profile/edit" element={<ProfileEditPage />} />
-            <Route path="/notifications" element={<NotificationsPage />} />
-
-            {/* Recruiter Routes */}
-            <Route path="/recruiter/dashboard" element={<RecruiterDashboardPage />} />
-            <Route path="/recruiter/search" element={<TalentSearchPage />} />
-            <Route path="/recruiter/starred" element={<StarredCandidatesPage />} />
-            <Route path="/recruiter/profile" element={<RecruiterProfilePage />} />
-            <Route path="/recruiter/candidate/:candidateId" element={<RecruiterCandidateViewPage />} />
-
-            <Route path="*" element={<Navigate to="/" replace />} />
-
-          </Routes>
-        </main>
-
-      </AuthProvider>
-    </Router>
-=======
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
->>>>>>> 996b755ed1bb6a11233e04b926a21af9f6d3bb42
   );
 }
 

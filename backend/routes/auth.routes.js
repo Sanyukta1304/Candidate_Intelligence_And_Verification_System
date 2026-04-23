@@ -70,24 +70,35 @@ router.get(
 );
 
 // GitHub OAuth callback
-router.get(
-  '/github/callback',
-  passport.authenticate('github', { failureRedirect: '/login' }),
-  (req, res) => {
+router.get('/github/callback', (req, res, next) => {
+  passport.authenticate('github', (err, user, info) => {
     try {
-      // User is authenticated, generate JWT
-      const token = generateToken(req.user._id, req.user.role);
+      if (err) {
+        console.error('GitHub callback auth error:', err);
+        return res.redirect(`${process.env.CLIENT_URL}/login?error=authentication_failed`);
+      }
 
-      // Redirect to frontend with token
-      // You should store this token in localStorage on the client
-      res.redirect(
-        `${process.env.CLIENT_URL}/auth/github/callback?token=${token}&userId=${req.user._id}`
-      );
+      if (!user) {
+        return res.redirect(`${process.env.CLIENT_URL}/login?error=authentication_failed`);
+      }
+
+      req.logIn(user, (loginErr) => {
+        if (loginErr) {
+          console.error('GitHub login session error:', loginErr);
+          return res.redirect(`${process.env.CLIENT_URL}/login?error=authentication_failed`);
+        }
+
+        const token = generateToken(user._id, user.role);
+
+        return res.redirect(
+          `${process.env.CLIENT_URL}/auth/github/callback?token=${token}&userId=${user._id}`
+        );
+      });
     } catch (error) {
       console.error('GitHub callback error:', error);
-      res.redirect(`${process.env.CLIENT_URL}/login?error=authentication_failed`);
+      return res.redirect(`${process.env.CLIENT_URL}/login?error=authentication_failed`);
     }
-  }
-);
+  })(req, res, next);
+});
 
 module.exports = router;

@@ -30,8 +30,8 @@ const CandidateSchema = new mongoose.Schema({
   total_score: { type: Number, default: 0 },
 
   github_username: { type: String, default: null },
-github_access_token: { type: String, default: null },
-github_verified: { type: Boolean, default: false },
+  github_access_token: { type: String, default: null },
+  github_verified: { type: Boolean, default: false },
 
   tier: {
     type: String,
@@ -46,11 +46,10 @@ github_verified: { type: Boolean, default: false },
 
 }, { timestamps: true });
 
-CandidateSchema.pre('save', function(next) {
+CandidateSchema.pre('save', function () {
   if (this.total_score >= 75) this.tier = 'High Potential';
   else if (this.total_score >= 50) this.tier = 'Moderate';
   else this.tier = 'Needs Improvement';
-  next();
 });
 
 module.exports = mongoose.model('Candidate', CandidateSchema);
