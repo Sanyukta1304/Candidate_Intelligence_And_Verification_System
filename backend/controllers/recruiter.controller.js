@@ -1,12 +1,8 @@
 const Candidate = require('../models/Candidate');
 const Recruiter = require('../models/Recruiter');
-<<<<<<< HEAD
 const User = require('../models/User');
 const { emitNotification } = require('../services/notificationService');
 
-=======
-const { emitNotification } = require('../services/notificationService');
->>>>>>> cf42a878e44737cf5323d658874f430fa0cae478
 
 // ===============================
 // 🔍 1. GET ALL CANDIDATES (VERIFIED ONLY - SEARCH + FILTER + SORT)

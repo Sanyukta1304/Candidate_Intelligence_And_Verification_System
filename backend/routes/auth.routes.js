@@ -92,7 +92,7 @@ router.get(
       console.error('GitHub callback error:', error);
       return res.redirect(`${process.env.CLIENT_URL}/login?error=authentication_failed`);
     }
-  })(req, res, next);
-});
+  });
+
 
 module.exports = router;

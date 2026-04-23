@@ -201,8 +201,6 @@ frontend/
 
 ---
 
-<<<<<<< HEAD
-=======
 ## 🎯 RECRUITER UI DOCUMENTATION (NEW!)
 
 The complete recruiter-side interface has been built with React & Tailwind CSS. Below are the dedicated documentation files:
@@ -390,7 +388,6 @@ RECRUITER_* docs (5 new files)
 
 ---
 
->>>>>>> 57a1e520ceaf0e759720d82a067372c2c675ec15
 ## ✅ What's Included
 
 ### Guides

@@ -5,9 +5,6 @@
 import axiosInstance from './axios';
 
 export const recruiterService = {
-<<<<<<< HEAD
-  // GET /api/recruiter/candidates
-=======
   // GET /api/recruiter/stats - Dashboard statistics
   getStats: async () => {
     try {
@@ -19,7 +16,6 @@ export const recruiterService = {
   },
 
   // GET /api/recruiter/candidates - Search and filter candidates
->>>>>>> 57a1e520ceaf0e759720d82a067372c2c675ec15
   getCandidates: async (filters = {}) => {
     try {
       const response = await axiosInstance.get('/api/recruiter/candidates', {
@@ -31,11 +27,7 @@ export const recruiterService = {
     }
   },
 
-<<<<<<< HEAD
-  // GET /api/recruiter/candidates/:id
-=======
   // GET /api/recruiter/candidates/:id - Get candidate detail
->>>>>>> 57a1e520ceaf0e759720d82a067372c2c675ec15
   getCandidateDetail: async (candidateId) => {
     try {
       const response = await axiosInstance.get(`/api/recruiter/candidates/${candidateId}`);
@@ -45,9 +37,6 @@ export const recruiterService = {
     }
   },
 
-<<<<<<< HEAD
-  // POST /api/recruiter/shortlist
-=======
   // POST /api/recruiter/star/:candidateId - Star/favorite a candidate
   starCandidate: async (candidateId) => {
     try {
@@ -113,7 +102,6 @@ export const recruiterService = {
   },
 
   // Legacy methods (kept for compatibility)
->>>>>>> 57a1e520ceaf0e759720d82a067372c2c675ec15
   addToShortlist: async (candidateId) => {
     try {
       const response = await axiosInstance.post('/api/recruiter/shortlist', {
@@ -125,10 +113,6 @@ export const recruiterService = {
     }
   },
 
-<<<<<<< HEAD
-  // DELETE /api/recruiter/shortlist/:candidateId
-=======
->>>>>>> 57a1e520ceaf0e759720d82a067372c2c675ec15
   removeFromShortlist: async (candidateId) => {
     try {
       const response = await axiosInstance.delete(
@@ -140,10 +124,6 @@ export const recruiterService = {
     }
   },
 
-<<<<<<< HEAD
-  // GET /api/recruiter/shortlist
-=======
->>>>>>> 57a1e520ceaf0e759720d82a067372c2c675ec15
   getShortlist: async () => {
     try {
       const response = await axiosInstance.get('/api/recruiter/shortlist');
@@ -153,10 +133,6 @@ export const recruiterService = {
     }
   },
 
-<<<<<<< HEAD
-  // POST /api/recruiter/notifications
-=======
->>>>>>> 57a1e520ceaf0e759720d82a067372c2c675ec15
   sendNotification: async (candidateId, message) => {
     try {
       const response = await axiosInstance.post('/api/recruiter/notifications', {

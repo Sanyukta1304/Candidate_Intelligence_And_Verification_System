@@ -23,8 +23,6 @@ export default {
           800: "#1e293b",
           900: "#0f172a",
         },
-<<<<<<< HEAD
-=======
         // Badge colors for tier ratings
         badge: {
           highPotential: {
@@ -44,7 +42,6 @@ export default {
             text: "#7e22ce", // purple-800
           },
         },
->>>>>>> 57a1e520ceaf0e759720d82a067372c2c675ec15
       },
       boxShadow: {
         soft: "0 2px 8px rgba(0, 0, 0, 0.06)",

@@ -168,22 +168,15 @@ app.use((err, req, res, next) => {
  * ========================================
  */
 
-const http = require('http');
+
 const socketIO = require('socket.io');
 
-// Create HTTP server for Socket.io
-const server = http.createServer(app);
 
-// Initialize Socket.io with CORS configuration
-const io = socketIO(server, {
-  cors: {
-    origin: process.env.CLIENT_URL || 'http://localhost:5173',
-    credentials: true
-  }
-});
+
+
 
 // ✅ Initialize notification service with Socket.io instance
-const { setSocketInstance } = require('./services/notificationService');
+
 setSocketInstance(io);
 
 // Socket.io connection handler
@@ -220,8 +213,4 @@ server.listen(PORT, () => {
   `);
 });
 
-<<<<<<< HEAD
 module.exports = { app, io, server };
-=======
-module.exports = { app, server, io };
->>>>>>> cf42a878e44737cf5323d658874f430fa0cae478
