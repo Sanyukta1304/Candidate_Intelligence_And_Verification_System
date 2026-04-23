@@ -135,20 +135,60 @@ app.use((err, req, res, next) => {
 
 /**
  * ========================================
+ * SOCKET.IO SETUP FOR REAL-TIME NOTIFICATIONS
+ * ========================================
+ */
+
+const http = require('http');
+const socketIO = require('socket.io');
+
+// Create HTTP server for Socket.io
+const server = http.createServer(app);
+
+// Initialize Socket.io with CORS configuration
+const io = socketIO(server, {
+  cors: {
+    origin: process.env.CLIENT_URL || 'http://localhost:5173',
+    credentials: true
+  }
+});
+
+// ✅ Initialize notification service with Socket.io instance
+const { setSocketInstance } = require('./services/notificationService');
+setSocketInstance(io);
+
+// Socket.io connection handler
+io.on('connection', (socket) => {
+  console.log(`🔌 Client connected: ${socket.id}`);
+  
+  // Join user room for targeted notifications
+  socket.on('join-user', (userId) => {
+    socket.join(userId);
+    console.log(`👤 User ${userId} joined room: ${socket.id}`);
+  });
+  
+  socket.on('disconnect', () => {
+    console.log(`❌ Client disconnected: ${socket.id}`);
+  });
+});
+
+/**
+ * ========================================
  * SERVER START
  * ========================================
  */
 
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, () => {
+server.listen(PORT, () => {
   console.log(`
     ╔════════════════════════════════════╗
     ║  🚀 Server Running Successfully    ║
     ║  📍 http://localhost:${PORT}    ║
     ║  🌍 Environment: ${process.env.NODE_ENV || 'development'}     ║
+    ║  🔌 Socket.io Enabled for Real-time  ║
     ╚════════════════════════════════════╝
   `);
 });
 
-module.exports = app;
+module.exports = { app, io, server };

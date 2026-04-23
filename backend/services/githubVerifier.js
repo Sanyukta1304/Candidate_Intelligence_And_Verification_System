@@ -65,6 +65,9 @@ async function verifyRepo(project, candidate) {
 
     const ratio = totalCommits > 0 ? userCommits / totalCommits : 0;
 
+    // ✅ CHECK IF USER IS THE REPO OWNER (by comparing username)
+    const isOwner = owner.toLowerCase() === candidate.github_username.toLowerCase();
+
     // UPDATE PROJECT DIRECTLY
     project.github_owner = owner;
     project.github_repo = repo;
@@ -79,6 +82,7 @@ async function verifyRepo(project, candidate) {
     project.user_commit_ratio = ratio;
 
     project.last_pushed_at = repoData.pushed_at;
+    project.user_is_owner = isOwner;
     project.user_is_contributor = userCommits > 0;
 
     return project;

@@ -22,6 +22,7 @@ const ProjectSchema = new mongoose.Schema({
   user_commit_ratio: { type: Number, default: 0 },
 
   last_pushed_at: { type: Date, default: null },
+  user_is_owner: { type: Boolean, default: false },
   user_is_contributor: { type: Boolean, default: false },
 
   verified: { type: Boolean, default: false },

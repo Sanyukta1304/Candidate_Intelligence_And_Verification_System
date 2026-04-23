@@ -69,8 +69,16 @@ function scoreProject(project) {
     recency_score +
     meta_score;
 
+  // ✅ VERIFICATION STRATEGY:
+  // Project is verified if:
+  // 1. User is the OWNER and has at least 1+ commits
+  // 2. OR User is a CONTRIBUTOR with at least 1 commit
+  const isVerified = 
+    (project.user_is_owner && project.user_commits >= 1) ||
+    (project.user_is_contributor && project.user_commits >= 1);
+
   return {
-    verified: project.is_public && project.user_commits > 0,
+    verified: isVerified,
     project_score: total,
     score_breakdown: {
       public_score,

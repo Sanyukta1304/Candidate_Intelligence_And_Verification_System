@@ -1,5 +1,7 @@
 const Candidate = require('../models/Candidate');
 const Recruiter = require('../models/Recruiter');
+const User = require('../models/User');
+const { emitNotification } = require('../services/notificationService');
 
 
 // ===============================
@@ -123,6 +125,21 @@ exports.getCandidateById = async (req, res) => {
       });
       recruiter.profiles_viewed_count += 1;
       await recruiter.save();
+
+      // ✅ EMIT NOTIFICATION - Profile Viewed
+      try {
+        const recruiterUser = await User.findById(req.user.id).select('username');
+        await emitNotification({
+          recipient_id: candidateId,
+          type: 'profile_viewed',
+          recruiter_id: recruiter._id,
+          recruiter_name: recruiterUser?.username || 'A recruiter',
+          company_name: recruiter.company_name || 'Unknown Company'
+        });
+      } catch (notifError) {
+        console.warn('[getCandidateById] Notification failed:', notifError.message);
+        // Don't fail the endpoint if notification fails
+      }
     }
 
     // Get candidate details
@@ -187,6 +204,21 @@ exports.starCandidate = async (req, res) => {
       recruiter.starred.push(candidateId);
       recruiter.profiles_starred_count += 1;
       await recruiter.save();
+
+      // ✅ EMIT NOTIFICATION - Profile Starred
+      try {
+        const recruiterUser = await User.findById(req.user.id).select('username');
+        await emitNotification({
+          recipient_id: candidateId,
+          type: 'profile_starred',
+          recruiter_id: recruiter._id,
+          recruiter_name: recruiterUser?.username || 'A recruiter',
+          company_name: recruiter.company_name || 'Unknown Company'
+        });
+      } catch (notifError) {
+        console.warn('[starCandidate] Notification failed:', notifError.message);
+        // Don't fail the endpoint if notification fails
+      }
 
       return res.json({
         success: true,
