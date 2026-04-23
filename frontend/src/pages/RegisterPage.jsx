@@ -3,19 +3,11 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { authService } from '../api/authService';
 
-<<<<<<< HEAD
 export const RegisterPage = () => {
   const navigate = useNavigate();
   const { register, setAuthError, error } = useAuth();
   const [loading, setLoading] = useState(false);
-  const [role, setRole] = useState('candidate'); // 'candidate' or 'recruiter'
-=======
-const RegisterPage = () => {
-  const navigate = useNavigate();
-  const { register, setAuthError, error } = useAuth();
-  const [loading, setLoading] = useState(false);
   const [role, setRole] = useState('candidate');
->>>>>>> 57a1e520ceaf0e759720d82a067372c2c675ec15
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -58,25 +50,15 @@ const RegisterPage = () => {
   };
 
   const handleGithubRegister = () => {
-<<<<<<< HEAD
-    // Redirect to backend GitHub OAuth endpoint
-    // You may want to pass role as query param
-=======
->>>>>>> 57a1e520ceaf0e759720d82a067372c2c675ec15
     window.location.href = `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/auth/github?role=${role}`;
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-primary-light px-4 py-8">
       <div className="w-full max-w-md">
-<<<<<<< HEAD
         {/* Card */}
         <div className="bg-white rounded-xl border border-slate-200 shadow-soft-lg p-8">
           {/* Header */}
-=======
-        <div className="bg-white rounded-xl border border-slate-200 shadow-soft-lg p-8">
-          
->>>>>>> 57a1e520ceaf0e759720d82a067372c2c675ec15
           <div className="text-center mb-8">
             <h1 className="text-3xl font-bold text-primary-dark mb-2">
               Create Account
@@ -86,17 +68,13 @@ const RegisterPage = () => {
             </p>
           </div>
 
-<<<<<<< HEAD
           {/* Error Message */}
-=======
->>>>>>> 57a1e520ceaf0e759720d82a067372c2c675ec15
           {error && (
             <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
               <p className="text-red-700 text-sm">{error}</p>
             </div>
           )}
 
-<<<<<<< HEAD
           {/* Role Selector */}
           <div className="mb-6">
             <label className="block text-sm font-medium text-slate-700 mb-3">
@@ -272,71 +250,8 @@ const RegisterPage = () => {
               </Link>
             </p>
           </div>
-=======
-          {/* FORM */}
-          <form onSubmit={handleSubmit} className="space-y-4 mb-6">
-
-            <input
-              type="text"
-              name="name"
-              value={formData.name}
-              onChange={handleChange}
-              placeholder="Full Name"
-              required
-              className="w-full px-4 py-3 border rounded-lg"
-            />
-
-            <input
-              type="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              placeholder="Email"
-              required
-              className="w-full px-4 py-3 border rounded-lg"
-            />
-
-            <input
-              type="password"
-              name="password"
-              value={formData.password}
-              onChange={handleChange}
-              placeholder="Password"
-              required
-              className="w-full px-4 py-3 border rounded-lg"
-            />
-
-            <input
-              type="password"
-              name="confirmPassword"
-              value={formData.confirmPassword}
-              onChange={handleChange}
-              placeholder="Confirm Password"
-              required
-              className="w-full px-4 py-3 border rounded-lg"
-            />
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-primary-dark text-white py-3 rounded-lg"
-            >
-              {loading ? 'Creating...' : 'Create Account'}
-            </button>
-          </form>
-
-          <p className="text-center">
-            Already have an account? <Link to="/login">Login</Link>
-          </p>
-
->>>>>>> 57a1e520ceaf0e759720d82a067372c2c675ec15
         </div>
       </div>
     </div>
   );
 };
-<<<<<<< HEAD
-=======
-
-export default RegisterPage;
->>>>>>> 57a1e520ceaf0e759720d82a067372c2c675ec15
