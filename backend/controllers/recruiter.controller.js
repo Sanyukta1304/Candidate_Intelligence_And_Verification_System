@@ -50,7 +50,9 @@ exports.getCandidates = async (req, res) => {
     }
 
     // Build query
-    let query = Candidate.find(filter).sort(sortObj);
+    let query = Candidate.find(filter)
+      .populate('user_id', 'username email')
+      .sort(sortObj);
 
     // Apply limit if needed
     if (queryLimit) {
@@ -60,8 +62,8 @@ exports.getCandidates = async (req, res) => {
       query = query.limit(Number(limit));
     }
 
-    // Select relevant fields to return
-    const candidates = await query.select('name email total_score skills github_verified createdAt');
+    // Execute query - no need for separate select since we're using populate
+    const candidates = await query;
 
     res.json({
       success: true,
