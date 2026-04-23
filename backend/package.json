@@ -29,9 +29,13 @@
     "multer": "^2.1.1",
     "passport": "^0.7.0",
     "passport-github2": "^0.1.12",
+<<<<<<< HEAD
     "pdf-parse": "^1.1.1",
     "pdf-text-extract": "^1.5.0",
     "pdfjs-dist": "^5.6.205",
+=======
+    "pdf-parse": "^2.4.5",
+>>>>>>> cf42a878e44737cf5323d658874f430fa0cae478
     "socket.io": "^4.8.3"
   },
   "devDependencies": {

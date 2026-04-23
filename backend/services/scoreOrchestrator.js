@@ -22,9 +22,9 @@ async function orchestrate(candidateId) {
     for (let project of projects) {
       const result = scoreProject(project);
 
-      project.project_score = result.project_score;
-      project.score_breakdown = result.score_breakdown;
-      project.verified = result.verified;
+      project.project_score = Number(result.project_score) || 0;
+      project.score_breakdown = result.score_breakdown || {};
+      project.verified = result.verified || false;
       project.verified_at = new Date();
 
       await project.save();
@@ -33,23 +33,27 @@ async function orchestrate(candidateId) {
     // 4. Filter verified projects
     const verifiedProjects = projects.filter((p) => p.verified);
 
-    // 5. Resume scoring (from existing service)
+    // 5. Resume scoring (safe fallback if no resume uploaded)
     const resumeResult = scoreResume(candidate.resume_text || "");
-    const resumeContribution = Math.round(
-      (resumeResult.total_ats_score / 100) * 30
-    );
+
+    const atsScore =
+      resumeResult && typeof resumeResult.total_ats_score === "number"
+        ? resumeResult.total_ats_score
+        : 0;
+
+    const resumeContribution = Math.round((atsScore / 100) * 30);
 
     // 6. Skills scoring
     const { scoredSkills, skills_score } = scoreSkills(
-      candidate.skills,
-      candidate.resume_text,
+      candidate.skills || [],
+      candidate.resume_text || "",
       verifiedProjects
     );
 
     // 7. Projects contribution
     const avgProjectScore =
       verifiedProjects.length > 0
-        ? verifiedProjects.reduce((sum, p) => sum + p.project_score, 0) /
+        ? verifiedProjects.reduce((sum, p) => sum + (Number(p.project_score) || 0), 0) /
           verifiedProjects.length
         : 0;
 
@@ -57,14 +61,16 @@ async function orchestrate(candidateId) {
 
     // 8. Final total score
     const totalScore =
-      resumeContribution + skills_score + projectsContribution;
+      (Number(resumeContribution) || 0) +
+      (Number(skills_score) || 0) +
+      (Number(projectsContribution) || 0);
 
     // 9. Update candidate
-    candidate.resume_score = resumeContribution;
-    candidate.skills_score = skills_score;
-    candidate.projects_score = projectsContribution;
-    candidate.total_score = totalScore;
-    candidate.skills = scoredSkills;
+    candidate.resume_score = Number(resumeContribution) || 0;
+    candidate.skills_score = Number(skills_score) || 0;
+    candidate.projects_score = Number(projectsContribution) || 0;
+    candidate.total_score = Number(totalScore) || 0;
+    candidate.skills = scoredSkills || [];
     candidate.last_scored = new Date();
 
     await candidate.save();
@@ -73,17 +79,18 @@ async function orchestrate(candidateId) {
     await ResumeScore.findOneAndUpdate(
       { candidate_id: candidateId },
       {
-        ...resumeResult,
+        ...(resumeResult || {}),
+        total_ats_score: atsScore,
         scored_at: new Date(),
       },
       { upsert: true, new: true }
     );
 
     return {
-      resume_score: resumeContribution,
-      skills_score,
-      projects_score: projectsContribution,
-      total_score: totalScore,
+      resume_score: Number(resumeContribution) || 0,
+      skills_score: Number(skills_score) || 0,
+      projects_score: Number(projectsContribution) || 0,
+      total_score: Number(totalScore) || 0,
     };
   } catch (error) {
     console.error("Orchestrator Error:", error.message);

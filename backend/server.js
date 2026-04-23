@@ -7,6 +7,8 @@
 const express = require('express');
 const cors = require('cors');
 const passport = require('passport');
+const http = require('http');
+const { Server } = require('socket.io');
 require('dotenv').config();
 
 // Import database connection
@@ -17,14 +19,41 @@ require('./config/passport');
 
 // 🔥 CREATE APP FIRST
 const app = express();
+const server = http.createServer(app);
 
 // Import routes
 const authRoutes = require('./routes/auth.routes');
 const candidateRoutes = require('./routes/candidate.routes');
-const recruiterRoutes = require('./routes/recruiter.routes'); // ✅ ADDED
-const projectRoutes = require("./routes/project.routes");
-const scoreRoutes = require("./routes/score.routes");
-const notificationRoutes = require("./routes/notification.routes"); // ✅ ADDED
+const recruiterRoutes = require('./routes/recruiter.routes');
+const projectRoutes = require('./routes/project.routes');
+const scoreRoutes = require('./routes/score.routes');
+const notificationRoutes = require('./routes/notification.routes');
+
+// Notification socket setup
+const { setSocketInstance } = require('./services/notificationService');
+
+const io = new Server(server, {
+  cors: {
+    origin: process.env.CLIENT_URL || 'http://localhost:3000',
+    credentials: true,
+  },
+});
+
+setSocketInstance(io);
+
+io.on('connection', (socket) => {
+  console.log('Socket connected:', socket.id);
+
+  socket.on('join', (userId) => {
+    if (userId) {
+      socket.join(userId.toString());
+    }
+  });
+
+  socket.on('disconnect', () => {
+    console.log('Socket disconnected:', socket.id);
+  });
+});
 
 /**
  * ========================================
@@ -52,7 +81,7 @@ app.use((req, res, next) => {
 // CORS
 app.use(
   cors({
-    origin: process.env.CLIENT_URL || 'http://localhost:5173',
+    origin: process.env.CLIENT_URL || 'http://localhost:3000',
     credentials: true,
     optionsSuccessStatus: 200,
   })
@@ -97,7 +126,7 @@ app.use('/api/auth', authRoutes);
 // Candidate routes
 app.use('/api/candidate', candidateRoutes);
 
-// 🔥 YOUR MODULE (Recruiter)
+// Recruiter routes
 app.use('/api/recruiter', recruiterRoutes);
 
 // Project routes
@@ -106,7 +135,7 @@ app.use('/api', projectRoutes);
 // Score routes
 app.use('/api', scoreRoutes);
 
-// 🔔 Notification routes (NEW)
+// Notification routes
 app.use('/api', notificationRoutes);
 
 /**
@@ -191,4 +220,8 @@ server.listen(PORT, () => {
   `);
 });
 
+<<<<<<< HEAD
 module.exports = { app, io, server };
+=======
+module.exports = { app, server, io };
+>>>>>>> cf42a878e44737cf5323d658874f430fa0cae478
