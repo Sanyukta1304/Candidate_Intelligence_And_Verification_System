@@ -29,6 +29,11 @@ passport.use(
             user = await User.findOne({ email });
           }
 
+          // ✅ ADDED: fallback check by username to avoid duplicate username creation
+          if (!user) {
+            user = await User.findOne({ username });
+          }
+
           if (!user) {
             // Create new user with GitHub info
             user = await User.create({

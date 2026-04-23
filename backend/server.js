@@ -22,6 +22,9 @@ const app = express();
 const authRoutes = require('./routes/auth.routes');
 const candidateRoutes = require('./routes/candidate.routes');
 const recruiterRoutes = require('./routes/recruiter.routes'); // ✅ ADDED
+const projectRoutes = require("./routes/project.routes");
+const scoreRoutes = require("./routes/score.routes");
+const notificationRoutes = require("./routes/notification.routes"); // ✅ ADDED
 
 /**
  * ========================================
@@ -83,6 +86,15 @@ app.use('/api/candidate', candidateRoutes);
 
 // 🔥 YOUR MODULE (Recruiter)
 app.use('/api/recruiter', recruiterRoutes);
+
+// Project routes
+app.use('/api', projectRoutes);
+
+// Score routes
+app.use('/api', scoreRoutes);
+
+// 🔔 Notification routes (NEW)
+app.use('/api', notificationRoutes);
 
 /**
  * ========================================
