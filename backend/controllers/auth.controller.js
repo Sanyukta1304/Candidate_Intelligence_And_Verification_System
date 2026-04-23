@@ -1,4 +1,6 @@
 const User = require('../models/User');
+const Candidate = require('../models/Candidate');
+const Recruiter = require('../models/Recruiter');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 
@@ -56,38 +58,6 @@ const register = async (req, res, next) => {
       password,
       role: role && ['candidate', 'recruiter'].includes(role) ? role : 'candidate', // Default role is 'candidate'
     });
-
-    // ✅ AUTO-CREATE CANDIDATE PROFILE IF ROLE IS CANDIDATE
-    if (user.role === 'candidate') {
-      try {
-        await Candidate.create({
-          user_id: user._id,
-          // Other fields will have defaults from schema
-        });
-      } catch (candidateError) {
-        console.error('Candidate profile creation error:', candidateError);
-        // Don't fail the registration if candidate profile creation fails
-      }
-    }
-
-    // ✅ AUTO-CREATE RECRUITER PROFILE IF ROLE IS RECRUITER
-    if (user.role === 'recruiter') {
-      try {
-        await Recruiter.create({
-          user_id: user._id,
-          company_name: '',
-          company_email: '',
-          about_company: '',
-          address: '',
-          logo_url: null
-          // starred, viewed_profiles, counters will have defaults from schema
-        });
-      } catch (recruiterError) {
-        console.error('Recruiter profile creation error:', recruiterError);
-        // Don't fail the registration if recruiter profile creation fails
-      }
-    }
-
 
     // ✅ AUTO-CREATE CANDIDATE PROFILE IF ROLE IS CANDIDATE
     if (user.role === 'candidate') {
