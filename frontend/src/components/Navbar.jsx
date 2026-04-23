@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
@@ -21,6 +22,67 @@ export const Navbar = () => {
               CredVerify
             </div>
           </Link>
+=======
+import { Link, useLocation } from "react-router-dom";
+
+const Navbar = () => {
+  const location = useLocation();
+
+  const isActive = (path) =>
+    location.pathname === path ? "text-black font-semibold" : "text-gray-500";
+
+  const getDashboardLink = () => {
+    if (user?.role === 'recruiter') {
+      return '/recruiter/dashboard';
+    }
+    return '/dashboard';
+  };
+
+  return (
+    <div className="flex justify-between items-center px-10 py-4 border-b bg-white">
+
+<<<<<<< HEAD
+          {/* Center Navigation (for authenticated users) */}
+          {isAuthenticated && (
+            <div className="hidden md:flex items-center gap-6">
+              <Link
+                to={getDashboardLink()}
+                className="text-slate-700 hover:text-primary-dark font-medium transition-colors"
+              >
+                Dashboard
+              </Link>
+              {user?.role === 'recruiter' ? (
+                <>
+                  <Link
+                    to="/recruiter/search"
+                    className="text-slate-700 hover:text-primary-dark font-medium transition-colors"
+                  >
+                    Search
+                  </Link>
+                  <Link
+                    to="/recruiter/starred"
+                    className="text-slate-700 hover:text-primary-dark font-medium transition-colors"
+                  >
+                    Starred
+                  </Link>
+                  <Link
+                    to="/recruiter/profile"
+                    className="text-slate-700 hover:text-primary-dark font-medium transition-colors"
+                  >
+                    Profile
+                  </Link>
+                </>
+              ) : (
+                <Link
+                  to="/profile"
+                  className="text-slate-700 hover:text-primary-dark font-medium transition-colors"
+                >
+                  Profile
+                </Link>
+              )}
+            </div>
+          )}
+>>>>>>> 57a1e520ceaf0e759720d82a067372c2c675ec15
 
           {/* Right side buttons */}
           <div className="flex items-center gap-4">
@@ -57,7 +119,34 @@ export const Navbar = () => {
             )}
           </div>
         </div>
+<<<<<<< HEAD
       </div>
     </nav>
   );
 };
+=======
+=======
+      <h1 className="text-lg font-semibold">CredVerify</h1>
+
+      <div className="flex gap-8">
+        <Link to="/dashboard" className={isActive("/dashboard")}>Dashboard</Link>
+        <Link to="/profile" className={isActive("/profile")}>Profile</Link>
+        <Link to="/notifications" className={isActive("/notifications")}>
+          Notifications <span className="text-red-500 text-sm">(3)</span>
+        </Link>
+>>>>>>> 996b755ed1bb6a11233e04b926a21af9f6d3bb42
+      </div>
+
+      <div className="flex items-center gap-3">
+        <div className="w-8 h-8 bg-blue-500 text-white flex items-center justify-center rounded-full">
+          JD
+        </div>
+        <button className="text-gray-600">Logout</button>
+      </div>
+
+    </div>
+  );
+};
+
+export default Navbar;
+>>>>>>> 57a1e520ceaf0e759720d82a067372c2c675ec15

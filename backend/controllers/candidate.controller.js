@@ -39,7 +39,7 @@ exports.updateProfile = async (req, res) => {
     // Get existing candidate
     let candidate = await Candidate.findOne({ user_id: req.user.id });
     
-    // ✅ If no candidate exists, create one with user_id (prevents null user_id)
+    // ✅ If no candidate exists, create one with user_id
     if (!candidate) {
       const newCandidate = await Candidate.create({
         user_id: req.user.id,
@@ -52,7 +52,6 @@ exports.updateProfile = async (req, res) => {
     
     // Prevent modification of GitHub-related fields if locked
     if (candidate.github_verification_locked) {
-      // Ensure GitHub fields cannot be modified once locked
       if (req.body.github_verified !== undefined || 
           req.body.github_username !== undefined || 
           req.body.github_access_token !== undefined ||
@@ -64,7 +63,7 @@ exports.updateProfile = async (req, res) => {
       }
     }
 
-    // ✅ Update existing candidate (NO upsert - prevents duplicate with null user_id)
+    // ✅ Update existing candidate
     const updated = await Candidate.findOneAndUpdate(
       { user_id: req.user.id },
       { education, about, skills, last_scored: new Date() },
@@ -76,6 +75,7 @@ exports.updateProfile = async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
 
 /**
  * GITHUB VERIFY
@@ -110,7 +110,7 @@ exports.verifyGithub = async (req, res) => {
       // Create new candidate profile with GitHub verification
       candidate = await Candidate.create({
         user_id: user._id,
-        github_username: user.github_username,
+        github_username: user.githubProfile.username,
         github_access_token: user.github_access_token,
         github_verified: true,
         github_verified_at: new Date(),
@@ -129,7 +129,7 @@ exports.verifyGithub = async (req, res) => {
       });
     } else {
       // Update candidate with GitHub verification and lock it
-      candidate.github_username = user.github_username;
+      candidate.github_username = user.githubProfile.username;
       candidate.github_access_token = user.github_access_token;
       candidate.github_verified = true;
       candidate.github_verified_at = new Date();

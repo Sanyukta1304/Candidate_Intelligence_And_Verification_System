@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
 const AuthContext = createContext(null);
@@ -34,10 +35,22 @@ export const AuthProvider = ({ children }) => {
     localStorage.setItem('token', jwtToken);
     localStorage.setItem('user', JSON.stringify(userData));
     setError(null);
+=======
+import React, { createContext, useContext, useState } from "react";
+
+const AuthContext = createContext();
+
+export const AuthProvider = ({ children }) => {
+  const [user, setUser] = useState(null);
+
+  const login = (data) => {
+    setUser(data);
+>>>>>>> 57a1e520ceaf0e759720d82a067372c2c675ec15
   };
 
   const logout = () => {
     setUser(null);
+<<<<<<< HEAD
     setToken(null);
     localStorage.removeItem('token');
     localStorage.removeItem('user');
@@ -75,3 +88,15 @@ export const useAuth = () => {
   }
   return context;
 };
+=======
+  };
+
+  return (
+    <AuthContext.Provider value={{ user, login, logout }}>
+      {children}
+    </AuthContext.Provider>
+  );
+};
+
+export const useAuth = () => useContext(AuthContext);
+>>>>>>> 57a1e520ceaf0e759720d82a067372c2c675ec15

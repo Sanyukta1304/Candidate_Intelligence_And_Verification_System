@@ -3,7 +3,11 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { authService } from '../api/authService';
 
+<<<<<<< HEAD
 export const LoginPage = () => {
+=======
+const LoginPage = () => {
+>>>>>>> 57a1e520ceaf0e759720d82a067372c2c675ec15
   const navigate = useNavigate();
   const { login, setAuthError, error } = useAuth();
   const [loading, setLoading] = useState(false);
@@ -142,3 +146,8 @@ export const LoginPage = () => {
     </div>
   );
 };
+<<<<<<< HEAD
+=======
+
+export default LoginPage;
+>>>>>>> 57a1e520ceaf0e759720d82a067372c2c675ec15

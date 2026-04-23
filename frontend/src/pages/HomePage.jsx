@@ -2,7 +2,11 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
+<<<<<<< HEAD
 export const HomePage = () => {
+=======
+const HomePage = () => {
+>>>>>>> 57a1e520ceaf0e759720d82a067372c2c675ec15
   const { isAuthenticated } = useAuth();
 
   return (
@@ -80,3 +84,8 @@ export const HomePage = () => {
     </div>
   );
 };
+<<<<<<< HEAD
+=======
+
+export default HomePage;
+>>>>>>> 57a1e520ceaf0e759720d82a067372c2c675ec15

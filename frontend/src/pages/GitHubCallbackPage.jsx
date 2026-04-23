@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
+<<<<<<< HEAD
 /**
  * GitHub OAuth Callback Handler
  * This page handles the redirect from GitHub OAuth flow
@@ -11,6 +12,9 @@ import { useAuth } from '../contexts/AuthContext';
  * - Error: /auth/github/callback?error=xxx
  */
 export const GitHubCallbackPage = () => {
+=======
+const GitHubCallbackPage = () => {
+>>>>>>> 57a1e520ceaf0e759720d82a067372c2c675ec15
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { login, setAuthError } = useAuth();
@@ -18,19 +22,28 @@ export const GitHubCallbackPage = () => {
   useEffect(() => {
     const handleCallback = async () => {
       try {
+<<<<<<< HEAD
         // Get parameters from URL
+=======
+>>>>>>> 57a1e520ceaf0e759720d82a067372c2c675ec15
         const token = searchParams.get('token');
         const userStr = searchParams.get('user');
         const error = searchParams.get('error');
 
+<<<<<<< HEAD
         // Handle errors
+=======
+>>>>>>> 57a1e520ceaf0e759720d82a067372c2c675ec15
         if (error) {
           setAuthError(`GitHub authentication failed: ${error}`);
           navigate('/login', { replace: true });
           return;
         }
 
+<<<<<<< HEAD
         // Handle success
+=======
+>>>>>>> 57a1e520ceaf0e759720d82a067372c2c675ec15
         if (token && userStr) {
           try {
             const user = JSON.parse(userStr);
@@ -62,3 +75,8 @@ export const GitHubCallbackPage = () => {
     </div>
   );
 };
+<<<<<<< HEAD
+=======
+
+export default GitHubCallbackPage;
+>>>>>>> 57a1e520ceaf0e759720d82a067372c2c675ec15

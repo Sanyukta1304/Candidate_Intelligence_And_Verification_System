@@ -1,6 +1,4 @@
 const User = require('../models/User');
-const Candidate = require('../models/Candidate');
-const Recruiter = require('../models/Recruiter');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 
@@ -22,21 +20,13 @@ const generateToken = (userId, role) => {
  */
 const register = async (req, res, next) => {
   try {
-    // Check if request body exists
-    if (!req.body || Object.keys(req.body).length === 0) {
-      return res.status(400).json({
-        success: false,
-        message: 'Request body is empty. Please ensure Content-Type is set to application/json and body contains username, email, password, passwordConfirm, and role.',
-      });
-    }
-
     const { username, email, password, passwordConfirm, role } = req.body;
 
     // Validation
     if (!username || !email || !password || !passwordConfirm) {
       return res.status(400).json({
         success: false,
-        message: 'Please provide all required fields: username, email, password, passwordConfirm',
+        message: 'Please provide all required fields',
       });
     }
 
@@ -66,6 +56,38 @@ const register = async (req, res, next) => {
       password,
       role: role && ['candidate', 'recruiter'].includes(role) ? role : 'candidate', // Default role is 'candidate'
     });
+
+    // ✅ AUTO-CREATE CANDIDATE PROFILE IF ROLE IS CANDIDATE
+    if (user.role === 'candidate') {
+      try {
+        await Candidate.create({
+          user_id: user._id,
+          // Other fields will have defaults from schema
+        });
+      } catch (candidateError) {
+        console.error('Candidate profile creation error:', candidateError);
+        // Don't fail the registration if candidate profile creation fails
+      }
+    }
+
+    // ✅ AUTO-CREATE RECRUITER PROFILE IF ROLE IS RECRUITER
+    if (user.role === 'recruiter') {
+      try {
+        await Recruiter.create({
+          user_id: user._id,
+          company_name: '',
+          company_email: '',
+          about_company: '',
+          address: '',
+          logo_url: null
+          // starred, viewed_profiles, counters will have defaults from schema
+        });
+      } catch (recruiterError) {
+        console.error('Recruiter profile creation error:', recruiterError);
+        // Don't fail the registration if recruiter profile creation fails
+      }
+    }
+
 
     // ✅ AUTO-CREATE CANDIDATE PROFILE IF ROLE IS CANDIDATE
     if (user.role === 'candidate') {
@@ -129,21 +151,13 @@ const register = async (req, res, next) => {
  */
 const login = async (req, res, next) => {
   try {
-    // Check if request body exists
-    if (!req.body || Object.keys(req.body).length === 0) {
-      return res.status(400).json({
-        success: false,
-        message: 'Request body is empty. Please ensure Content-Type is set to application/json and body contains email and password.',
-      });
-    }
-
     const { email, password } = req.body;
 
     // Validation
     if (!email || !password) {
       return res.status(400).json({
         success: false,
-        message: 'Please provide both email and password',
+        message: 'Please provide email and password',
       });
     }
 
