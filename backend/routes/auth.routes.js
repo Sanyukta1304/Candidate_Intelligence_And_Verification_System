@@ -72,7 +72,6 @@ router.get(
   })
 );
 
-<<<<<<< HEAD
 // GitHub OAuth callback with email-based linking
 router.get(
   '/github/callback',
@@ -89,33 +88,6 @@ router.get(
       res.redirect(
         `${process.env.CLIENT_URL}/auth/github/callback?token=${token}&userId=${githubUser._id}`
       );
-=======
-// GitHub OAuth callback
-router.get('/github/callback', (req, res, next) => {
-  passport.authenticate('github', (err, user, info) => {
-    try {
-      if (err) {
-        console.error('GitHub callback auth error:', err);
-        return res.redirect(`${process.env.CLIENT_URL}/login?error=authentication_failed`);
-      }
-
-      if (!user) {
-        return res.redirect(`${process.env.CLIENT_URL}/login?error=authentication_failed`);
-      }
-
-      req.logIn(user, (loginErr) => {
-        if (loginErr) {
-          console.error('GitHub login session error:', loginErr);
-          return res.redirect(`${process.env.CLIENT_URL}/login?error=authentication_failed`);
-        }
-
-        const token = generateToken(user._id, user.role);
-
-        return res.redirect(
-          `${process.env.CLIENT_URL}/auth/github/callback?token=${token}&userId=${user._id}`
-        );
-      });
->>>>>>> cf42a878e44737cf5323d658874f430fa0cae478
     } catch (error) {
       console.error('GitHub callback error:', error);
       return res.redirect(`${process.env.CLIENT_URL}/login?error=authentication_failed`);

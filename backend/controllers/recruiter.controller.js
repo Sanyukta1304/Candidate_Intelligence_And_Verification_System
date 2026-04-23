@@ -36,7 +36,6 @@ exports.getCandidates = async (req, res) => {
     let sortObj = { total_score: -1 };
     let queryLimit = null;
 
-<<<<<<< HEAD
     // ✅ SORT OPTIONS:
     if (sortBy === 'desc' || sortBy === 'descending') {
       // Descending by score (highest first)
@@ -85,13 +84,6 @@ exports.getCandidates = async (req, res) => {
         topLimit: queryLimit || limit || 'all'
       },
       data: candidates
-=======
-    const candidates = await Candidate.find(filter).sort({ total_score: -1 });
-
-    res.json({
-      success: true,
-      data: candidates,
->>>>>>> cf42a878e44737cf5323d658874f430fa0cae478
     });
   } catch (error) {
     res.status(500).json({
@@ -108,7 +100,6 @@ exports.getCandidateById = async (req, res) => {
   try {
     const candidateId = req.params.id;
 
-<<<<<<< HEAD
     // Validate candidate ID format
     if (!candidateId.match(/^[0-9a-fA-F]{24}$/)) {
       return res.status(400).json({
@@ -129,22 +120,6 @@ exports.getCandidateById = async (req, res) => {
     const alreadyViewed = recruiter.viewed_profiles.some(
       v => v.candidate_id.toString() === candidateId
     );
-=======
-    if (!recruiter) {
-      return res.status(404).json({
-        success: false,
-        message: 'Recruiter profile not found',
-      });
-    }
-
-    // add view tracking
-    recruiter.viewed_profiles.push({
-      candidate_id: req.params.id,
-    });
-
-    recruiter.profiles_viewed_count += 1;
-    await recruiter.save();
->>>>>>> cf42a878e44737cf5323d658874f430fa0cae478
 
     if (!alreadyViewed) {
       recruiter.viewed_profiles.push({
@@ -216,7 +191,6 @@ exports.starCandidate = async (req, res) => {
   try {
     const candidateId = req.params.candidateId;
 
-<<<<<<< HEAD
     // Validate candidate ID
     if (!candidateId.match(/^[0-9a-fA-F]{24}$/)) {
       return res.status(400).json({
@@ -275,49 +249,6 @@ exports.starCandidate = async (req, res) => {
       success: true,
       message: "Candidate already starred",
       data: { starred: true }
-=======
-    if (!recruiter) {
-      return res.status(404).json({
-        success: false,
-        message: 'Recruiter profile not found',
-      });
-    }
-
-    const candidate = await Candidate.findById(candidateId);
-
-    if (!candidate) {
-      return res.status(404).json({
-        success: false,
-        message: 'Candidate not found',
-      });
-    }
-
-    const alreadyStarred = recruiter.starred.some(
-      (id) => id.toString() === candidateId
-    );
-
-    // avoid duplicate
-    if (!alreadyStarred) {
-      recruiter.starred.push(candidateId);
-      recruiter.profiles_starred_count += 1;
-      await recruiter.save();
-
-      // 🔔 Trigger notification only when newly starred
-      if (candidate.user_id) {
-        await emitNotification({
-          recipient_id: candidate.user_id,
-          type: 'profile_starred',
-          recruiter_id: recruiter._id,
-          recruiter_name: recruiter.name || recruiter.company_name || 'Recruiter',
-          company_name: recruiter.company_name || '',
-        });
-      }
-    }
-
-    res.json({
-      success: true,
-      message: 'Candidate starred successfully',
->>>>>>> cf42a878e44737cf5323d658874f430fa0cae478
     });
   } catch (error) {
     res.status(500).json({
@@ -334,7 +265,6 @@ exports.unstarCandidate = async (req, res) => {
   try {
     const candidateId = req.params.candidateId;
 
-<<<<<<< HEAD
     // Validate candidate ID
     if (!candidateId.match(/^[0-9a-fA-F]{24}$/)) {
       return res.status(400).json({
@@ -353,31 +283,14 @@ exports.unstarCandidate = async (req, res) => {
     }
 
     const initialCount = recruiter.starred.length;
-=======
-    if (!recruiter) {
-      return res.status(404).json({
-        success: false,
-        message: 'Recruiter profile not found',
-      });
-    }
-
-    const beforeCount = recruiter.starred.length;
-
->>>>>>> cf42a878e44737cf5323d658874f430fa0cae478
     recruiter.starred = recruiter.starred.filter(
       (id) => id.toString() !== candidateId
     );
 
-<<<<<<< HEAD
     // Only update count if something was removed
     if (recruiter.starred.length < initialCount) {
       recruiter.profiles_starred_count = Math.max(0, recruiter.profiles_starred_count - 1);
       await recruiter.save();
-=======
-    if (recruiter.starred.length < beforeCount && recruiter.profiles_starred_count > 0) {
-      recruiter.profiles_starred_count -= 1;
-    }
->>>>>>> cf42a878e44737cf5323d658874f430fa0cae478
 
       return res.json({
         success: true,
@@ -388,12 +301,8 @@ exports.unstarCandidate = async (req, res) => {
 
     res.json({
       success: true,
-<<<<<<< HEAD
       message: "Candidate was not starred",
       data: { starred: false }
-=======
-      message: 'Candidate unstarred',
->>>>>>> cf42a878e44737cf5323d658874f430fa0cae478
     });
   } catch (error) {
     res.status(500).json({
@@ -427,12 +336,8 @@ exports.getStarred = async (req, res) => {
 
     res.json({
       success: true,
-<<<<<<< HEAD
       count: recruiter.starred.length,
       data: recruiter.starred || []
-=======
-      data: recruiter.starred,
->>>>>>> cf42a878e44737cf5323d658874f430fa0cae478
     });
   } catch (error) {
     res.status(500).json({
@@ -467,10 +372,7 @@ exports.getStats = async (req, res) => {
     const stats = {
       profilesViewed: recruiter.profiles_viewed_count,
       profilesStarred: recruiter.profiles_starred_count,
-<<<<<<< HEAD
       averageScore: Math.round(averageScore * 100) / 100
-=======
->>>>>>> cf42a878e44737cf5323d658874f430fa0cae478
     };
 
     res.json({
