@@ -37,10 +37,10 @@ export const PrivateRoute = ({
 };
 
 /**
- * PublicRoute component that redirects to dashboard if already authenticated
+ * PublicRoute component that redirects to role-based dashboard if already authenticated
  */
 export const PublicRoute = ({ children }) => {
-  const { isAuthenticated, loading } = useAuth();
+  const { isAuthenticated, user, loading } = useAuth();
 
   if (loading) {
     return (
@@ -54,7 +54,11 @@ export const PublicRoute = ({ children }) => {
   }
 
   if (isAuthenticated) {
-    return <Navigate to="/dashboard" replace />;
+    // Redirect to role-based dashboard
+    const dashboardRoute = user?.role === 'candidate' 
+      ? '/candidate/profile' 
+      : '/recruiter/dashboard';
+    return <Navigate to={dashboardRoute} replace />;
   }
 
   return children;

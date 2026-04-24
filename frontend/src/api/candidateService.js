@@ -103,4 +103,24 @@ export const candidateService = {
       throw error.response?.data || error;
     }
   },
+
+  // POST /api/candidate/github/verify - Verify GitHub connection
+  verifyGithub: async () => {
+    try {
+      const response = await axiosInstance.post('/api/candidate/github/verify');
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error;
+    }
+  },
+
+  // GET /api/auth/github - Initiate GitHub OAuth
+  initiateGithubAuth: async () => {
+    try {
+      const response = await axiosInstance.get('/api/auth/github');
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error;
+    }
+  },
 };

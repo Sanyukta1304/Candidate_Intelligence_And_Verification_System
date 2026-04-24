@@ -55,6 +55,10 @@ const userSchema = new mongoose.Schema(
       type: Date,
       default: null,
     },
+    github_verification_locked: {
+      type: Boolean,
+      default: false,
+    },
     isActive: {
       type: Boolean,
       default: true,

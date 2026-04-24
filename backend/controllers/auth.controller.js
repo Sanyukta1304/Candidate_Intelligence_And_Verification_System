@@ -102,6 +102,8 @@ const register = async (req, res, next) => {
         username: user.username,
         email: user.email,
         role: user.role,
+        github_verified: user.github_verified,
+        github_verification_locked: user.github_verification_locked,
       },
     });
   } catch (error) {
@@ -171,6 +173,8 @@ const login = async (req, res, next) => {
         username: user.username,
         email: user.email,
         role: user.role,
+        github_verified: user.github_verified,
+        github_verification_locked: user.github_verification_locked,
       },
     });
   } catch (error) {
@@ -206,8 +210,10 @@ const getCurrentUser = async (req, res, next) => {
         username: user.username,
         email: user.email,
         role: user.role,
+        name: user.username,
         isActive: user.isActive,
         github_verified: user.github_verified,
+        github_verification_locked: user.github_verification_locked,
         createdAt: user.createdAt,
       },
     });

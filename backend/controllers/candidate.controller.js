@@ -116,6 +116,10 @@ exports.verifyGithub = async (req, res) => {
         github_verified_at: new Date(),
         github_verification_locked: true
       });
+      
+      // ✅ ALSO UPDATE USER MODEL TO LOCK VERIFICATION
+      user.github_verification_locked = true;
+      await user.save();
     } else if (candidate.github_verification_locked) {
       // GitHub verification already completed and locked
       return res.status(403).json({
@@ -136,6 +140,10 @@ exports.verifyGithub = async (req, res) => {
       candidate.github_verification_locked = true;
       await candidate.save();
     }
+
+    // ✅ ALSO UPDATE USER MODEL TO LOCK VERIFICATION
+    user.github_verification_locked = true;
+    await user.save();
 
     res.json({
       success: true,

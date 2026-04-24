@@ -1,56 +1,39 @@
 import React from "react";
-import { useNavigate } from "react-router-dom";
 
 const NotificationsPage = () => {
-  const navigate = useNavigate();
-
   return (
-    <div style={{ padding: "20px", fontFamily: "Arial" }}>
+    <div className="min-h-screen bg-gray-50 py-8">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Page Title */}
+        <h1 className="text-4xl font-bold text-primary-dark mb-8">Notifications</h1>
 
-      {/* Navbar */}
-      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "20px" }}>
-        <h2>CredVerify</h2>
+        {/* Notification Items */}
+        <div className="space-y-4">
+          {/* Notification Item 1 */}
+          <div className="bg-white rounded-lg border border-slate-200 shadow-soft-lg p-6 hover:shadow-lg transition">
+            <p className="text-slate-700">
+              <span className="font-semibold text-slate-900">TechCorp</span> viewed your profile
+            </p>
+            <p className="text-sm text-slate-500 mt-2">2 hours ago</p>
+          </div>
 
-        <div style={{ display: "flex", gap: "20px", cursor: "pointer" }}>
-          <span onClick={() => navigate("/dashboard")}>Dashboard</span>
-          <span onClick={() => navigate("/profile")}>Profile</span>
-          <span onClick={() => navigate("/notifications")}>Notifications</span>
-          <span>Logout</span>
+          {/* Notification Item 2 */}
+          <div className="bg-white rounded-lg border border-slate-200 shadow-soft-lg p-6 hover:shadow-lg transition">
+            <p className="text-slate-700">
+              <span className="font-semibold text-slate-900">StartupXYZ</span> starred your profile
+            </p>
+            <p className="text-sm text-slate-500 mt-2">5 hours ago</p>
+          </div>
+
+          {/* Notification Item 3 */}
+          <div className="bg-white rounded-lg border border-slate-200 shadow-soft-lg p-6 hover:shadow-lg transition">
+            <p className="text-slate-700">
+              <span className="font-semibold text-slate-900">DevCo</span> viewed your profile
+            </p>
+            <p className="text-sm text-slate-500 mt-2">1 day ago</p>
+          </div>
         </div>
       </div>
-
-      <h2>Notifications</h2>
-
-      <div style={{
-        marginTop: "20px",
-        background: "#fff",
-        padding: "15px",
-        borderRadius: "10px",
-        boxShadow: "0 0 10px #eee"
-      }}>
-        <p><b>TechCorp</b> viewed your profile • 2 hours ago</p>
-      </div>
-
-      <div style={{
-        marginTop: "10px",
-        background: "#fff",
-        padding: "15px",
-        borderRadius: "10px",
-        boxShadow: "0 0 10px #eee"
-      }}>
-        <p><b>StartupXYZ</b> starred your profile • 5 hours ago</p>
-      </div>
-
-      <div style={{
-        marginTop: "10px",
-        background: "#fff",
-        padding: "15px",
-        borderRadius: "10px",
-        boxShadow: "0 0 10px #eee"
-      }}>
-        <p><b>DevCo</b> viewed your profile • 1 day ago</p>
-      </div>
-
     </div>
   );
 };

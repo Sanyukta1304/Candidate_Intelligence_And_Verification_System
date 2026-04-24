@@ -3,15 +3,20 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { Navbar } from './components/Navbar';
 import { PrivateRoute, PublicRoute } from './components/PrivateRoute';
 import { HomePage } from './pages/HomePage';
+import { AboutPage } from './pages/AboutPage';
 import { LoginPage } from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { GitHubCallbackPage } from './pages/GitHubCallbackPage';
+import CandidateProfilePage from './pages/candidate/ProfilePageNew';
+import RecruiterDashboardPage from './pages/recruiter/RecruiterDashboardPage';
+import NotificationsPage from './pages/NotificationsPage';
 
 function App() {
   return (
-    <Router>
+    <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
       <Navbar />
+
       <main className="min-h-[calc(100vh-64px)]">
         <Routes>
           {/* Public Routes */}
@@ -23,6 +28,17 @@ function App() {
               </PublicRoute>
             }
           />
+
+          {/* ADD THIS ABOUT ROUTE */}
+          <Route
+            path="/about"
+            element={
+              <PublicRoute>
+                <AboutPage />
+              </PublicRoute>
+            }
+          />
+
           <Route
             path="/login"
             element={
@@ -31,6 +47,7 @@ function App() {
               </PublicRoute>
             }
           />
+
           <Route
             path="/register"
             element={
@@ -39,6 +56,7 @@ function App() {
               </PublicRoute>
             }
           />
+
           <Route
             path="/auth/github/callback"
             element={<GitHubCallbackPage />}
@@ -54,26 +72,30 @@ function App() {
             }
           />
 
-          {/* Role-Specific Protected Routes (Example) */}
+          {/* Role-Specific Protected Routes */}
           <Route
-            path="/candidate/*"
+            path="/candidate/profile"
             element={
               <PrivateRoute requiredRole="candidate">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-                  <h1 className="text-3xl font-bold text-primary-dark">Candidate Portal</h1>
-                  <p className="text-slate-600 mt-2">This section is only for candidates.</p>
-                </div>
+                <CandidateProfilePage />
               </PrivateRoute>
             }
           />
+
           <Route
-            path="/recruiter/*"
+            path="/recruiter/dashboard"
             element={
               <PrivateRoute requiredRole="recruiter">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-                  <h1 className="text-3xl font-bold text-primary-dark">Recruiter Portal</h1>
-                  <p className="text-slate-600 mt-2">This section is only for recruiters.</p>
-                </div>
+                <RecruiterDashboardPage />
+              </PrivateRoute>
+            }
+          />
+
+          <Route
+            path="/notifications"
+            element={
+              <PrivateRoute requiredRole="candidate">
+                <NotificationsPage />
               </PrivateRoute>
             }
           />

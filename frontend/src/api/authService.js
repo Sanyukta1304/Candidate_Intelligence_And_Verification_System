@@ -5,9 +5,10 @@ export const authService = {
   register: async (name, email, password, role) => {
     try {
       const response = await axiosInstance.post('/api/auth/register', {
-        name,
+        username: name,
         email,
         password,
+        passwordConfirm: password,
         role,
       });
       return response.data;
