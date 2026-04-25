@@ -28,6 +28,7 @@ const recruiterRoutes = require('./routes/recruiter.routes');
 const projectRoutes = require('./routes/project.routes');
 const scoreRoutes = require('./routes/score.routes');
 const notificationRoutes = require('./routes/notification.routes');
+const skillScoreRoutes = require('./routes/skillScoreRoutes');
 
 // Notification socket setup
 const { setSocketInstance } = require('./services/notificationService');
@@ -137,6 +138,9 @@ app.use('/api', scoreRoutes);
 
 // Notification routes
 app.use('/api', notificationRoutes);
+
+// Skill score routes
+app.use('/api', skillScoreRoutes);
 
 /**
  * ========================================
