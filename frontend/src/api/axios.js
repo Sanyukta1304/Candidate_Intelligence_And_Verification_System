@@ -7,7 +7,8 @@ const API_BASE_URL = import.meta?.env?.VITE_API_URL || 'http://localhost:5000';
 const axiosInstance = axios.create({
   baseURL: API_BASE_URL,
   headers: {
-    'Content-Type': 'application/json',
+    // Don't set Content-Type here - let axios auto-detect based on data type
+    // This allows FormData to be properly serialized with multipart/form-data
   },
 });
 
@@ -18,6 +19,12 @@ axiosInstance.interceptors.request.use(
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+    
+    // Set Content-Type for non-FormData requests
+    if (!(config.data instanceof FormData) && !config.headers['Content-Type']) {
+      config.headers['Content-Type'] = 'application/json';
+    }
+    
     return config;
   },
   (error) => {

@@ -4,6 +4,8 @@ import { useAuth } from '../../contexts/AuthContext';
 import { candidateService } from '../../api/candidateService';
 import { projectService } from '../../api/projectService';
 import { triggerScore } from '../../api/score.api';
+import { InlineSkillEditor } from '../../components/candidate/InlineSkillEditor';
+import { InlineResumeEditor } from '../../components/candidate/InlineResumeEditor';
 
 const ProfilePageNew = () => {
   const navigate = useNavigate();
@@ -186,6 +188,71 @@ const ProfilePageNew = () => {
     }
   };
 
+  // Handle skill saving from inline editor
+  const handleSaveSkills = async (skills) => {
+    try {
+      setVerifying(true);
+      setError(null);
+
+      const updateData = {
+        skills: skills.map(skill => typeof skill === 'object' ? skill : { name: skill }),
+      };
+
+      const response = await candidateService.updateProfile(updateData);
+
+      if (response.success) {
+        setProfile(response.data);
+        
+        // Trigger score re-calculation for skills
+        if (profile?._id) {
+          try {
+            console.log('Triggering skill score re-calculation...');
+            await triggerScore(profile._id);
+            setSuccessMessage('Skills updated and scored successfully!');
+          } catch (scoreErr) {
+            console.error('Failed to trigger score re-calculation:', scoreErr);
+            setSuccessMessage('Skills updated! (Score update pending)');
+          }
+        }
+        
+        await loadProfileData();
+        setTimeout(() => setSuccessMessage(''), 3000);
+      }
+    } catch (err) {
+      setError(err.message || 'Failed to update skills');
+    } finally {
+      setVerifying(false);
+    }
+  };
+
+  // Handle resume upload from inline editor
+  const handleResumeUpload = async (file) => {
+    try {
+      setResumeUploading(true);
+      setError(null);
+
+      // Pass file directly - candidateService.uploadResume will create FormData
+      const response = await candidateService.uploadResume(file);
+
+      if (response.success) {
+        // Update profile with new resume URL
+        setProfile(prev => ({
+          ...prev,
+          resume_url: response.data.resume_url
+        }));
+
+        // Reload profile data to get updated resume score
+        await loadProfileData();
+        setSuccessMessage('Resume uploaded and scored successfully!');
+        setTimeout(() => setSuccessMessage(''), 3000);
+      }
+    } catch (err) {
+      setError(err.message || 'Failed to upload resume');
+    } finally {
+      setResumeUploading(false);
+    }
+  };
+
   const handleAddProject = async () => {
     try {
       setVerifying(true);
@@ -273,37 +340,6 @@ const ProfilePageNew = () => {
       ...editForm,
       skills: editForm.skills.filter((_, i) => i !== index),
     });
-  };
-
-  const handleResumeUpload = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    // Validate file type
-    if (!file.name.toLowerCase().endsWith('.pdf') && !file.name.toLowerCase().endsWith('.docx')) {
-      setError('Only PDF and DOCX files are supported');
-      return;
-    }
-
-    try {
-      setResumeUploading(true);
-      setError(null);
-
-      const response = await candidateService.uploadResume(file);
-
-      if (response.success || response.data) {
-        setSuccessMessage('Resume uploaded and scored successfully!');
-        // Reload profile data to get updated scores
-        await loadProfileData();
-        setTimeout(() => setSuccessMessage(''), 3000);
-      }
-    } catch (err) {
-      setError(err.message || 'Failed to upload resume');
-    } finally {
-      setResumeUploading(false);
-      // Reset file input
-      e.target.value = '';
-    }
   };
 
   // Check if GitHub is verified
@@ -562,30 +598,54 @@ const ProfilePageNew = () => {
           </div>
         )}
 
+        {/* Skills Section with Inline Editor */}
+        {activeTab === 'details' && canAccessRestrictedFeatures && (
+          <div className="mt-8">
+            <InlineSkillEditor
+              skills={profile?.skills || []}
+              scoreCard={scoreCard}
+              loading={verifying}
+              onSave={handleSaveSkills}
+            />
+          </div>
+        )}
+
         {activeTab === 'resume' && (
-          <div className="bg-white rounded-xl border border-slate-200 shadow-soft-lg p-8">
+          <div>
             {!canAccessRestrictedFeatures ? (
-              <div className="text-center py-12">
-                <div className="text-4xl mb-4">🔒</div>
-                <h3 className="text-xl font-semibold text-slate-900 mb-2">Feature Locked</h3>
-                <p className="text-slate-600 mb-6">
-                  Please complete GitHub verification to access Resume features
-                </p>
-                <button
-                  onClick={handleConnectGithub}
-                  className="px-6 py-2 bg-primary-dark text-white rounded-lg hover:bg-slate-800"
-                >
-                  Connect GitHub
-                </button>
+              <div className="bg-white rounded-xl border border-slate-200 shadow-soft-lg p-8">
+                <div className="text-center py-12">
+                  <div className="text-4xl mb-4">🔒</div>
+                  <h3 className="text-xl font-semibold text-slate-900 mb-2">Feature Locked</h3>
+                  <p className="text-slate-600 mb-6">
+                    Please complete GitHub verification to access Resume features
+                  </p>
+                  <button
+                    onClick={handleConnectGithub}
+                    className="px-6 py-2 bg-primary-dark text-white rounded-lg hover:bg-slate-800"
+                  >
+                    Connect GitHub
+                  </button>
+                </div>
               </div>
             ) : (
-              <div>
-                <h3 className="text-xl font-semibold text-primary-dark mb-6">Resume + ATS Score</h3>
-                
-                {resumeScore ? (
-                  <div className="space-y-6">
+              <div className="space-y-8">
+                {/* Inline Resume Editor */}
+                <InlineResumeEditor
+                  resumeUrl={profile?.resume_url}
+                  resumeScore={resumeScore}
+                  scoreCard={scoreCard}
+                  loading={resumeUploading}
+                  onUpload={handleResumeUpload}
+                />
+
+                {/* Resume Score Details */}
+                {resumeScore && (
+                  <div className="bg-white rounded-xl border border-slate-200 shadow-soft-lg p-8">
+                    <h3 className="text-xl font-semibold text-primary-dark mb-6">Resume + ATS Score</h3>
+                    
                     {/* Top Score Cards */}
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
                       <div className="bg-white rounded-lg border border-slate-200 p-4">
                         <p className="text-xs font-medium text-slate-600 mb-1">ATS Score</p>
                         <p className="text-2xl font-bold text-primary-dark">{resumeScore.final_score || 0}/100</p>
@@ -707,7 +767,7 @@ const ProfilePageNew = () => {
                             </div>
                             <div className="w-full bg-slate-200 rounded-full h-2">
                               <div
-                                className="bg-green-500 h-2 rounded-full"
+                                className="bg-blue-500 h-2 rounded-full"
                                 style={{ width: `${(resumeScore.dimension_scores?.evidence || 0) / 100 * 100}%` }}
                               ></div>
                             </div>
@@ -716,33 +776,6 @@ const ProfilePageNew = () => {
                         </div>
                       </div>
                     </div>
-
-                    {/* Download Resume Button */}
-                    <div className="text-center">
-                      <a
-                        href={profile?.resume_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-block px-6 py-3 bg-primary-dark text-white rounded-lg hover:bg-slate-800 font-semibold"
-                      >
-                        📄 Download Resume
-                      </a>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="text-center py-12">
-                    <div className="text-4xl mb-4">📄</div>
-                    <h3 className="text-xl font-semibold text-slate-900 mb-2">No resume uploaded</h3>
-                    <p className="text-slate-600 mb-6">Upload your resume to get ATS scoring and improve your profile</p>
-                    <button
-                      onClick={() => {
-                        setShowEditModal(true);
-                        setEditModalTab('resume');
-                      }}
-                      className="px-6 py-3 bg-primary-dark text-white rounded-lg hover:bg-slate-800 font-semibold"
-                    >
-                      Upload your resume
-                    </button>
                   </div>
                 )}
               </div>

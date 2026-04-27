@@ -40,11 +40,8 @@ export const candidateService = {
     try {
       const formData = new FormData();
       formData.append('resume', file);
-      const response = await axiosInstance.post('/api/candidate/resume', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
+      // Don't set Content-Type header - let axios/browser handle it with correct boundary
+      const response = await axiosInstance.post('/api/candidate/resume', formData);
       return response.data;
     } catch (error) {
       throw error.response?.data || error;

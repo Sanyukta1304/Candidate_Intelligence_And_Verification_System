@@ -10,6 +10,7 @@ import { RegisterPage } from './pages/RegisterPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { GitHubCallbackPage } from './pages/GitHubCallbackPage';
 import CandidateProfilePage from './pages/candidate/ProfilePageNew';
+import CandidateDashboardPage from './pages/candidate/CandidateDashboardPage';
 import RecruiterDashboardPage from './pages/recruiter/RecruiterDashboardPage';
 import TalentSearchPage from './pages/recruiter/TalentSearchPage';
 import StarredCandidatesPage from './pages/recruiter/StarredCandidatesPage';
@@ -78,6 +79,15 @@ function App() {
           />
 
           {/* Candidate Routes */}
+          <Route
+            path="/candidate/dashboard"
+            element={
+              <PrivateRoute requiredRole="candidate">
+                <CandidateDashboardPage />
+              </PrivateRoute>
+            }
+          />
+
           <Route
             path="/candidate/profile"
             element={
@@ -165,6 +175,8 @@ function DashboardRedirect() {
   
   if (user?.role === 'recruiter') {
     return <Navigate to="/recruiter/dashboard" replace />;
+  } else if (user?.role === 'candidate') {
+    return <Navigate to="/candidate/dashboard" replace />;
   }
   
   return <DashboardPage />;
