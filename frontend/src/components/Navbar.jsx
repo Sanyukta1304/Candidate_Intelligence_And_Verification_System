@@ -84,7 +84,7 @@ export const Navbar = () => {
               )}
 
               <Link
-                to="/profile"
+                to={user?.role === 'recruiter' ? '/recruiter/profile' : '/profile'}
                 className="text-slate-700 hover:text-black font-medium transition"
               >
                 Profile

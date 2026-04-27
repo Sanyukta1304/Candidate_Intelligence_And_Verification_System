@@ -53,26 +53,30 @@ export const ActivityFeed = ({ activities = [], loading = false }) => {
             ))}
           </>
         ) : activities.length > 0 ? (
-          activities.map((activity, idx) => (
-            <div key={idx} className="flex items-start gap-3 pb-4 border-b border-slate-100 last:border-0">
-              <div
-                className="w-10 h-10 rounded-full bg-primary-dark text-white flex items-center justify-center flex-shrink-0 text-sm font-semibold"
-                title={activity.candidateName}
-              >
-                {getInitials(activity.candidateName)}
+          activities.map((activity, idx) => {
+            const candidateName = activity.candidate?.name || 'Unknown';
+            const actionLabel = activity.action === 'viewed' ? 'profile viewed' : 'profile starred';
+            return (
+              <div key={idx} className="flex items-start gap-3 pb-4 border-b border-slate-100 last:border-0">
+                <div
+                  className="w-10 h-10 rounded-full bg-primary-dark text-white flex items-center justify-center flex-shrink-0 text-sm font-semibold"
+                  title={candidateName}
+                >
+                  {getInitials(candidateName)}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-slate-800 text-sm">
+                    <span className="font-semibold">{candidateName}</span>
+                    {' — '}
+                    <span className="text-slate-600">{actionLabel}</span>
+                  </p>
+                  <p className="text-xs text-slate-500 mt-1">
+                    {formatTime(activity.timestamp)}
+                  </p>
+                </div>
               </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-slate-800 text-sm">
-                  <span className="font-semibold">{activity.candidateName}</span>
-                  {' — '}
-                  <span className="text-slate-600">{activity.action}</span>
-                </p>
-                <p className="text-xs text-slate-500 mt-1">
-                  {formatTime(activity.timestamp)}
-                </p>
-              </div>
-            </div>
-          ))
+            );
+          })
         ) : (
           <div className="text-center py-8 text-slate-500">
             <p className="text-sm">No recent activity</p>

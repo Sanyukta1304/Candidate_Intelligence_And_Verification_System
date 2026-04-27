@@ -52,7 +52,7 @@ export const RecruiterStats = ({
                 <div className="h-8 bg-slate-200 rounded animate-pulse w-12"></div>
               ) : (
                 <h3 className={`text-3xl font-bold ${stat.color}`}>
-                  {stat.value.toLocaleString()}
+                  {typeof stat.value === 'number' ? stat.value.toLocaleString() : stat.value}
                 </h3>
               )}
             </div>

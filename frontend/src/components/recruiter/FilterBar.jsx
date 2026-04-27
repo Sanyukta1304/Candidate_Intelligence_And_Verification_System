@@ -3,57 +3,39 @@ import { Card } from '../UI';
 
 /**
  * FilterBar Component
- * Handles role filtering, score range, and top candidates
+ * Handles skill filtering, score range, and sorting options
  */
 export const FilterBar = ({
-  selectedRoles = [],
+  skill = '',
   minScore = 0,
   maxScore = 100,
-  topOnly = false,
-  onRoleChange = () => {},
+  sortBy = 'desc',
+  onSkillChange = () => {},
   onMinScoreChange = () => {},
-  onMaxScoreChange = () => {},
-  onTopOnlyChange = () => {},
+  onSortChange = () => {},
   onReset = () => {},
 }) => {
-  const roles = [
-    'Full Stack',
-    'Frontend',
-    'Backend',
-    'Data Analyst',
-    'DevOps',
-    'Product Manager',
-    'Design',
+  const sortOptions = [
+    { value: 'desc', label: 'Highest Score First' },
+    { value: 'asc', label: 'Lowest Score First' },
+    { value: 'top10', label: 'Top 10 Only' },
+    { value: 'name', label: 'Sort by Name' },
+    { value: 'recent', label: 'Most Recent' },
   ];
-
-  const toggleRole = (role) => {
-    const updated = selectedRoles.includes(role)
-      ? selectedRoles.filter((r) => r !== role)
-      : [...selectedRoles, role];
-    onRoleChange(updated);
-  };
 
   return (
     <Card className="p-6 mb-6">
       <div className="space-y-6">
-        {/* Role Filters */}
+        {/* Skill Search */}
         <div>
-          <h3 className="text-sm font-semibold text-slate-900 mb-3">Role</h3>
-          <div className="flex flex-wrap gap-2">
-            {roles.map((role) => (
-              <button
-                key={role}
-                onClick={() => toggleRole(role)}
-                className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-                  selectedRoles.includes(role)
-                    ? 'bg-primary-dark text-white'
-                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-                }`}
-              >
-                {role}
-              </button>
-            ))}
-          </div>
+          <h3 className="text-sm font-semibold text-slate-900 mb-3">Search by Skill</h3>
+          <input
+            type="text"
+            value={skill}
+            onChange={(e) => onSkillChange(e.target.value)}
+            placeholder="e.g., React, Python, AWS..."
+            className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-dark focus:border-transparent"
+          />
         </div>
 
         {/* Score Range */}
@@ -61,33 +43,47 @@ export const FilterBar = ({
           <h3 className="text-sm font-semibold text-slate-900 mb-3">
             Min Score: {minScore}
           </h3>
-          <div className="flex gap-4 items-center">
+          <div className="space-y-3">
+            <div className="flex gap-2">
+              {[60, 65, 70, 75, 80, 85, 90].map((score) => (
+                <button
+                  key={score}
+                  onClick={() => onMinScoreChange(score)}
+                  className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
+                    minScore === score
+                      ? 'bg-primary-dark text-white'
+                      : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                  }`}
+                >
+                  {score}+
+                </button>
+              ))}
+            </div>
             <input
               type="range"
               min="0"
               max="100"
               value={minScore}
               onChange={(e) => onMinScoreChange(Number(e.target.value))}
-              className="flex-1 h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-primary-dark"
+              className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-primary-dark"
             />
-            <span className="text-sm font-semibold text-slate-700 min-w-fit">
-              {minScore}
-            </span>
           </div>
         </div>
 
-        {/* Top Only Checkbox */}
-        <div className="flex items-center gap-3">
-          <input
-            type="checkbox"
-            id="topOnly"
-            checked={topOnly}
-            onChange={(e) => onTopOnlyChange(e.target.checked)}
-            className="w-4 h-4 rounded border-slate-300 text-primary-dark focus:ring-primary-dark cursor-pointer"
-          />
-          <label htmlFor="topOnly" className="text-sm font-medium text-slate-700 cursor-pointer">
-            Top 10 Candidates Only
-          </label>
+        {/* Sort Options */}
+        <div>
+          <h3 className="text-sm font-semibold text-slate-900 mb-3">Sort By</h3>
+          <select
+            value={sortBy}
+            onChange={(e) => onSortChange(e.target.value)}
+            className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-dark focus:border-transparent"
+          >
+            {sortOptions.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
         </div>
 
         {/* Reset Button */}

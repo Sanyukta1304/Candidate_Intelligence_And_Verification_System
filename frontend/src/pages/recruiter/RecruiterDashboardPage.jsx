@@ -34,11 +34,14 @@ const RecruiterDashboardPage = () => {
         recruiterService.getActivity(10),
       ]);
 
+      console.log('Stats:', statsData);
+      console.log('Activity:', activityData);
+
       setStats(statsData?.data || statsData);
       setActivities(activityData?.data || activityData || []);
     } catch (err) {
       console.error('Failed to load dashboard data:', err);
-      setError('Failed to load dashboard data');
+      setError('Failed to load dashboard data. Please try again.');
     } finally {
       setLoading(false);
     }

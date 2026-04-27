@@ -32,5 +32,6 @@ router.delete('/star/:candidateId', verifyToken, recruiterController.unstarCandi
 // ========================================
 router.get('/starred', verifyToken, recruiterController.getStarred);
 router.get('/stats', verifyToken, recruiterController.getStats);
+router.get('/activity', verifyToken, recruiterController.getActivity);
 
 module.exports = router;

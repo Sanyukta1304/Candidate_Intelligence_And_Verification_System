@@ -1,4 +1,4 @@
-import axiosInstance from "./axiosInstance";
+import axiosInstance from "./axios";
 
 /**
  * Trigger full score re-orchestration for a candidate.

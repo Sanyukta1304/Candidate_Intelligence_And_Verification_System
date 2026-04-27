@@ -15,9 +15,9 @@ const TalentSearchPage = () => {
   const [error, setError] = useState(null);
 
   // Filter state
-  const [selectedRoles, setSelectedRoles] = useState([]);
+  const [skill, setSkill] = useState('');
   const [minScore, setMinScore] = useState(0);
-  const [topOnly, setTopOnly] = useState(false);
+  const [sortBy, setSortBy] = useState('desc');
   const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
@@ -31,15 +31,14 @@ const TalentSearchPage = () => {
       setLoading(true);
       setError(null);
 
-      const requestFilters = {
-        ...filters,
-        roles: filters.roles || selectedRoles,
-        minScore: filters.minScore !== undefined ? filters.minScore : minScore,
-        topOnly: filters.topOnly !== undefined ? filters.topOnly : topOnly,
-        search: filters.search || searchQuery,
+      // Build request params matching backend API
+      const requestParams = {
+        ...(filters.skill || skill ? { skill: filters.skill || skill } : {}),
+        ...(filters.minScore !== undefined ? { minScore: filters.minScore } : minScore > 0 ? { minScore } : {}),
+        ...(filters.sortBy || sortBy ? { sortBy: filters.sortBy || sortBy } : {}),
       };
 
-      const response = await recruiterService.getCandidates(requestFilters);
+      const response = await recruiterService.getCandidates(requestParams);
       setCandidates(response?.data || response || []);
     } catch (err) {
       console.error('Failed to search candidates:', err);
@@ -49,9 +48,9 @@ const TalentSearchPage = () => {
     }
   };
 
-  const handleRoleChange = (roles) => {
-    setSelectedRoles(roles);
-    searchCandidates({ roles });
+  const handleSkillChange = (newSkill) => {
+    setSkill(newSkill);
+    searchCandidates({ skill: newSkill });
   };
 
   const handleMinScoreChange = (score) => {
@@ -59,27 +58,27 @@ const TalentSearchPage = () => {
     searchCandidates({ minScore: score });
   };
 
-  const handleTopOnlyChange = (isTop) => {
-    setTopOnly(isTop);
-    searchCandidates({ topOnly: isTop });
+  const handleSortChange = (newSortBy) => {
+    setSortBy(newSortBy);
+    searchCandidates({ sortBy: newSortBy });
   };
 
   const handleReset = () => {
-    setSelectedRoles([]);
+    setSkill('');
     setMinScore(0);
-    setTopOnly(false);
+    setSortBy('desc');
     setSearchQuery('');
     searchCandidates({
-      roles: [],
+      skill: '',
       minScore: 0,
-      topOnly: false,
-      search: '',
+      sortBy: 'desc',
     });
   };
 
   const handleSearch = (query) => {
     setSearchQuery(query);
-    searchCandidates({ search: query });
+    // Note: Backend doesn't have name search via this endpoint,
+    // but we can filter client-side if needed
   };
 
   if (!isAuthenticated || user?.role !== 'recruiter') {
@@ -96,18 +95,7 @@ const TalentSearchPage = () => {
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-primary-dark">Search Candidates</h1>
-          <p className="text-slate-600 mt-2">Find and filter talented candidates</p>
-        </div>
-
-        {/* Search Bar */}
-        <div className="mb-8">
-          <input
-            type="text"
-            placeholder="Search by name, skills, or university..."
-            value={searchQuery}
-            onChange={(e) => handleSearch(e.target.value)}
-            className="w-full px-4 py-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-dark focus:border-transparent"
-          />
+          <p className="text-slate-600 mt-2">Find and filter talented candidates by skill and score</p>
         </div>
 
         {/* Error Message */}
@@ -122,12 +110,12 @@ const TalentSearchPage = () => {
           {/* Sidebar - Filters */}
           <div className="lg:col-span-1">
             <FilterBar
-              selectedRoles={selectedRoles}
+              skill={skill}
               minScore={minScore}
-              topOnly={topOnly}
-              onRoleChange={handleRoleChange}
+              sortBy={sortBy}
+              onSkillChange={handleSkillChange}
               onMinScoreChange={handleMinScoreChange}
-              onTopOnlyChange={handleTopOnlyChange}
+              onSortChange={handleSortChange}
               onReset={handleReset}
             />
           </div>

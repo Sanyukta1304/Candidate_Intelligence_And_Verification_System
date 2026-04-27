@@ -10,12 +10,11 @@ import { Card, Button, Input } from '../../components/UI';
 const RecruiterProfilePage = () => {
   const { isAuthenticated, user } = useAuth();
   const [profile, setProfile] = useState({
-    name: '',
-    email: '',
-    company: '',
-    position: '',
+    company_name: '',
+    company_email: '',
+    about_company: '',
     address: '',
-    aboutCompany: '',
+    logo_url: null,
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -38,27 +37,15 @@ const RecruiterProfilePage = () => {
       const profileData = response?.data || response;
 
       setProfile({
-        name: profileData?.name || user?.name || '',
-        email: profileData?.email || user?.email || '',
-        company: profileData?.company || '',
-        position: profileData?.position || '',
+        company_name: profileData?.company_name || '',
+        company_email: profileData?.company_email || '',
+        about_company: profileData?.about_company || '',
         address: profileData?.address || '',
-        aboutCompany: profileData?.aboutCompany || '',
+        logo_url: profileData?.logo_url || null,
       });
     } catch (err) {
       console.error('Failed to load profile:', err);
       setError('Failed to load profile');
-      // Set default profile from user
-      if (user) {
-        setProfile({
-          name: user.name || '',
-          email: user.email || '',
-          company: '',
-          position: '',
-          address: '',
-          aboutCompany: '',
-        });
-      }
     } finally {
       setLoading(false);
     }
@@ -148,32 +135,6 @@ const RecruiterProfilePage = () => {
         ) : (
           <Card className="p-8">
             <div className="space-y-6">
-              {/* Personal Information */}
-              <div>
-                <h2 className="text-lg font-semibold text-primary-dark mb-4">
-                  Personal Information
-                </h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <Input
-                    label="Name"
-                    name="name"
-                    value={profile.name}
-                    onChange={handleInputChange}
-                    disabled={!isEditing}
-                    className={!isEditing ? 'bg-slate-50 cursor-not-allowed' : ''}
-                  />
-                  <Input
-                    label="Email"
-                    name="email"
-                    type="email"
-                    value={profile.email}
-                    onChange={handleInputChange}
-                    disabled={!isEditing}
-                    className={!isEditing ? 'bg-slate-50 cursor-not-allowed' : ''}
-                  />
-                </div>
-              </div>
-
               {/* Company Information */}
               <div>
                 <h2 className="text-lg font-semibold text-primary-dark mb-4">
@@ -182,16 +143,17 @@ const RecruiterProfilePage = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <Input
                     label="Company Name"
-                    name="company"
-                    value={profile.company}
+                    name="company_name"
+                    value={profile.company_name}
                     onChange={handleInputChange}
                     disabled={!isEditing}
                     className={!isEditing ? 'bg-slate-50 cursor-not-allowed' : ''}
                   />
                   <Input
-                    label="Position"
-                    name="position"
-                    value={profile.position}
+                    label="Company Email"
+                    name="company_email"
+                    type="email"
+                    value={profile.company_email}
                     onChange={handleInputChange}
                     disabled={!isEditing}
                     className={!isEditing ? 'bg-slate-50 cursor-not-allowed' : ''}
@@ -202,7 +164,7 @@ const RecruiterProfilePage = () => {
               {/* Address */}
               <div>
                 <Input
-                  label="Address"
+                  label="Company Address"
                   name="address"
                   value={profile.address}
                   onChange={handleInputChange}
@@ -217,8 +179,8 @@ const RecruiterProfilePage = () => {
                   About the Company
                 </label>
                 <textarea
-                  name="aboutCompany"
-                  value={profile.aboutCompany}
+                  name="about_company"
+                  value={profile.about_company}
                   onChange={handleInputChange}
                   disabled={!isEditing}
                   rows="4"

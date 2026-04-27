@@ -94,6 +94,16 @@ export const candidateService = {
     }
   },
 
+  // GET /api/candidate/resume-score - Get resume ATS score
+  getResumeScore: async () => {
+    try {
+      const response = await axiosInstance.get('/api/candidate/resume-score');
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error;
+    }
+  },
+
   // GET /api/candidate/score
   getScoreCard: async () => {
     try {

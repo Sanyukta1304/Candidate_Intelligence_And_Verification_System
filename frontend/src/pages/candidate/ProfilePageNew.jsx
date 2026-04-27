@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { candidateService } from '../../api/candidateService';
 import { projectService } from '../../api/projectService';
+import { triggerScore } from '../../api/score.api';
 
 const ProfilePageNew = () => {
   const navigate = useNavigate();
@@ -11,15 +12,19 @@ const ProfilePageNew = () => {
   // State management
   const [profile, setProfile] = useState(null);
   const [scoreCard, setScoreCard] = useState(null);
+  const [resumeScore, setResumeScore] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState('details');
   const [showEditModal, setShowEditModal] = useState(false);
+  const [editModalTab, setEditModalTab] = useState('basic');
   const [showProjectModal, setShowProjectModal] = useState(false);
   const [projects, setProjects] = useState([]);
   const [verifying, setVerifying] = useState(false);
   const [verifyingGithub, setVerifyingGithub] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
+  const [skillInput, setSkillInput] = useState('');
+  const [resumeUploading, setResumeUploading] = useState(false);
 
   // Edit form state
   const [editForm, setEditForm] = useState({
@@ -73,6 +78,15 @@ const ProfilePageNew = () => {
       } catch (projErr) {
         console.error('Failed to load projects:', projErr);
         setProjects([]);
+      }
+
+      // Load resume score
+      try {
+        const resumeRes = await candidateService.getResumeScore();
+        setResumeScore(resumeRes.data);
+      } catch (resumeErr) {
+        console.error('Failed to load resume score:', resumeErr);
+        setResumeScore(null);
       }
     } catch (err) {
       console.error('Failed to load profile:', err);
@@ -133,12 +147,36 @@ const ProfilePageNew = () => {
       setVerifying(true);
       setError(null);
 
-      const response = await candidateService.updateProfile(editForm);
+      let updateData = {};
+
+      if (editModalTab === 'basic') {
+        updateData = {
+          education: editForm.education,
+          about: editForm.about,
+        };
+      } else if (editModalTab === 'skills') {
+        updateData = {
+          skills: editForm.skills.map(skill => typeof skill === 'object' ? skill : { name: skill }),
+        };
+      }
+
+      const response = await candidateService.updateProfile(updateData);
 
       if (response.success) {
         setProfile(response.data);
+        
+        // Trigger score re-calculation after skills update
+        if (editModalTab === 'skills' && profile?._id) {
+          try {
+            await triggerScore(profile._id);
+          } catch (scoreErr) {
+            console.error('Failed to trigger score re-calculation:', scoreErr);
+          }
+        }
+        
         setShowEditModal(false);
         setSuccessMessage('Profile updated successfully!');
+        await loadProfileData();
         setTimeout(() => setSuccessMessage(''), 3000);
       }
     } catch (err) {
@@ -211,6 +249,61 @@ const ProfilePageNew = () => {
       ...projectForm,
       tech_stack: projectForm.tech_stack.filter((_, i) => i !== index),
     });
+  };
+
+  const handleAddSkill = () => {
+    if (skillInput.trim()) {
+      const newSkill = {
+        name: skillInput.trim(),
+        sub_score: 0,
+        project_score: 0,
+        resume_score: 0,
+        decl_score: 20,
+      };
+      setEditForm({
+        ...editForm,
+        skills: [...editForm.skills, newSkill],
+      });
+      setSkillInput('');
+    }
+  };
+
+  const handleRemoveSkill = (index) => {
+    setEditForm({
+      ...editForm,
+      skills: editForm.skills.filter((_, i) => i !== index),
+    });
+  };
+
+  const handleResumeUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.name.toLowerCase().endsWith('.pdf') && !file.name.toLowerCase().endsWith('.docx')) {
+      setError('Only PDF and DOCX files are supported');
+      return;
+    }
+
+    try {
+      setResumeUploading(true);
+      setError(null);
+
+      const response = await candidateService.uploadResume(file);
+
+      if (response.success || response.data) {
+        setSuccessMessage('Resume uploaded and scored successfully!');
+        // Reload profile data to get updated scores
+        await loadProfileData();
+        setTimeout(() => setSuccessMessage(''), 3000);
+      }
+    } catch (err) {
+      setError(err.message || 'Failed to upload resume');
+    } finally {
+      setResumeUploading(false);
+      // Reset file input
+      e.target.value = '';
+    }
   };
 
   // Check if GitHub is verified
@@ -435,13 +528,13 @@ const ProfilePageNew = () => {
                   <div className="flex justify-between mb-2">
                     <p className="text-sm font-semibold text-slate-700">Resume</p>
                     <p className="text-sm font-semibold text-slate-700">
-                      {scoreCard?.resume || 0}/30
+                      {Math.min(scoreCard?.resume || 0, 30)}/30
                     </p>
                   </div>
                   <div className="w-full bg-slate-200 rounded-full h-2">
                     <div
                       className="bg-green-500 h-2 rounded-full"
-                      style={{ width: `${(scoreCard?.resume || 0) / 30 * 100}%` }}
+                      style={{ width: `${Math.min((scoreCard?.resume || 0), 30) / 30 * 100}%` }}
                     ></div>
                   </div>
                 </div>
@@ -488,7 +581,170 @@ const ProfilePageNew = () => {
             ) : (
               <div>
                 <h3 className="text-xl font-semibold text-primary-dark mb-6">Resume + ATS Score</h3>
-                <p className="text-slate-600">Resume management features coming soon...</p>
+                
+                {resumeScore ? (
+                  <div className="space-y-6">
+                    {/* Top Score Cards */}
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      <div className="bg-white rounded-lg border border-slate-200 p-4">
+                        <p className="text-xs font-medium text-slate-600 mb-1">ATS Score</p>
+                        <p className="text-2xl font-bold text-primary-dark">{resumeScore.final_score || 0}/100</p>
+                      </div>
+                      <div className="bg-white rounded-lg border border-slate-200 p-4">
+                        <p className="text-xs font-medium text-slate-600 mb-1">Section score</p>
+                        <p className="text-2xl font-bold text-primary-dark">{resumeScore.dimension_scores?.structure || 0}/100</p>
+                      </div>
+                      <div className="bg-white rounded-lg border border-slate-200 p-4">
+                        <p className="text-xs font-medium text-slate-600 mb-1">Keyword score</p>
+                        <p className="text-2xl font-bold text-primary-dark">{resumeScore.dimension_scores?.market_demand || 0}/100</p>
+                      </div>
+                      <div className="bg-white rounded-lg border border-slate-200 p-4">
+                        <p className="text-xs font-medium text-slate-600 mb-1">Format score</p>
+                        <p className="text-2xl font-bold text-primary-dark">{resumeScore.dimension_scores?.evidence || 0}/100</p>
+                      </div>
+                    </div>
+
+                    {/* Main Content Grid */}
+                    <div className="grid md:grid-cols-3 gap-6">
+                      {/* Left Column - Section Analysis */}
+                      <div className="bg-white rounded-lg border border-slate-200 p-6">
+                        <h4 className="font-semibold text-slate-900 mb-4">Section Analysis</h4>
+                        <div className="space-y-3">
+                          {resumeScore.section_presence && Object.entries(resumeScore.section_presence).map(([section, present]) => (
+                            <div key={section} className="flex justify-between items-center">
+                              <span className="text-sm capitalize text-slate-600">{section}</span>
+                              <span className={`px-3 py-1 rounded-full text-xs font-medium ${present ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                                {present ? 'Present' : 'Missing'}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                        <p className="text-xs text-slate-500 mt-4 italic">Add missing sections to improve your ATS score</p>
+                      </div>
+
+                      {/* Middle Column - ATS Score Breakdown */}
+                      <div className="bg-white rounded-lg border border-slate-200 p-6">
+                        <h4 className="font-semibold text-slate-900 mb-4">ATS Score Breakdown</h4>
+                        <div className="flex justify-center mb-4">
+                          {/* Simple CSS Donut Chart */}
+                          <div className="relative w-32 h-32">
+                            <svg className="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
+                              <path
+                                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                                fill="none"
+                                stroke="#e2e8f0"
+                                strokeWidth="3"
+                              />
+                              <path
+                                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                                fill="none"
+                                stroke="#22c55e"
+                                strokeWidth="3"
+                                strokeDasharray={`${(resumeScore.dimension_scores?.structure || 0) / 100 * 100}, 100`}
+                              />
+                            </svg>
+                            <div className="absolute inset-0 flex items-center justify-center">
+                              <span className="text-lg font-bold text-slate-900">{resumeScore.dimension_scores?.structure || 0}/100</span>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2">
+                            <div className="w-3 h-3 rounded-full bg-green-500"></div>
+                            <span className="text-sm text-slate-600">Section completeness: {resumeScore.dimension_scores?.structure || 0}/100</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <div className="w-3 h-3 rounded-full bg-blue-500"></div>
+                            <span className="text-sm text-slate-600">Keyword density: {resumeScore.dimension_scores?.market_demand || 0}/100</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <div className="w-3 h-3 rounded-full bg-orange-500"></div>
+                            <span className="text-sm text-slate-600">Format score: {resumeScore.dimension_scores?.evidence || 0}/100</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Right Column - Signal Strength */}
+                      <div className="bg-white rounded-lg border border-slate-200 p-6">
+                        <h4 className="font-semibold text-slate-900 mb-4">Signal Strength</h4>
+                        <div className="space-y-4">
+                          <div>
+                            <div className="flex justify-between mb-1">
+                              <span className="text-sm text-slate-600">Section completeness</span>
+                              <span className="text-sm font-medium text-slate-900">
+                                {resumeScore.dimension_scores?.structure || 0}/100
+                              </span>
+                            </div>
+                            <div className="w-full bg-slate-200 rounded-full h-2">
+                              <div
+                                className="bg-yellow-500 h-2 rounded-full"
+                                style={{ width: `${(resumeScore.dimension_scores?.structure || 0) / 100 * 100}%` }}
+                              ></div>
+                            </div>
+                            <p className="text-xs text-slate-500 mt-1">Moderate</p>
+                          </div>
+                          <div>
+                            <div className="flex justify-between mb-1">
+                              <span className="text-sm text-slate-600">Action keyword density</span>
+                              <span className="text-sm font-medium text-slate-900">
+                                {resumeScore.dimension_scores?.market_demand || 0}/100
+                              </span>
+                            </div>
+                            <div className="w-full bg-slate-200 rounded-full h-2">
+                              <div
+                                className="bg-green-500 h-2 rounded-full"
+                                style={{ width: `${(resumeScore.dimension_scores?.market_demand || 0) / 100 * 100}%` }}
+                              ></div>
+                            </div>
+                            <p className="text-xs text-slate-500 mt-1">Strong</p>
+                          </div>
+                          <div>
+                            <div className="flex justify-between mb-1">
+                              <span className="text-sm text-slate-600">Format quality</span>
+                              <span className="text-sm font-medium text-slate-900">
+                                {resumeScore.dimension_scores?.evidence || 0}/100
+                              </span>
+                            </div>
+                            <div className="w-full bg-slate-200 rounded-full h-2">
+                              <div
+                                className="bg-green-500 h-2 rounded-full"
+                                style={{ width: `${(resumeScore.dimension_scores?.evidence || 0) / 100 * 100}%` }}
+                              ></div>
+                            </div>
+                            <p className="text-xs text-slate-500 mt-1">Strong</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Download Resume Button */}
+                    <div className="text-center">
+                      <a
+                        href={profile?.resume_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-block px-6 py-3 bg-primary-dark text-white rounded-lg hover:bg-slate-800 font-semibold"
+                      >
+                        📄 Download Resume
+                      </a>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center py-12">
+                    <div className="text-4xl mb-4">📄</div>
+                    <h3 className="text-xl font-semibold text-slate-900 mb-2">No resume uploaded</h3>
+                    <p className="text-slate-600 mb-6">Upload your resume to get ATS scoring and improve your profile</p>
+                    <button
+                      onClick={() => {
+                        setShowEditModal(true);
+                        setEditModalTab('resume');
+                      }}
+                      className="px-6 py-3 bg-primary-dark text-white rounded-lg hover:bg-slate-800 font-semibold"
+                    >
+                      Upload your resume
+                    </button>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -613,15 +869,36 @@ const ProfilePageNew = () => {
             <div className="p-6 space-y-6">
               {/* Tabs */}
               <div className="flex gap-4 border-b border-slate-200">
-                <button className="pb-4 px-4 font-semibold border-b-2 border-primary-dark text-primary-dark">
+                <button
+                  onClick={() => setEditModalTab('basic')}
+                  className={`pb-4 px-4 font-semibold border-b-2 transition-colors ${
+                    editModalTab === 'basic'
+                      ? 'border-primary-dark text-primary-dark'
+                      : 'border-transparent text-slate-600 hover:text-primary-dark'
+                  }`}
+                >
                   Basic Info
                 </button>
                 {canAccessRestrictedFeatures && (
                   <>
-                    <button className="pb-4 px-4 font-semibold text-slate-600 hover:text-primary-dark">
+                    <button
+                      onClick={() => setEditModalTab('skills')}
+                      className={`pb-4 px-4 font-semibold border-b-2 transition-colors ${
+                        editModalTab === 'skills'
+                          ? 'border-primary-dark text-primary-dark'
+                          : 'border-transparent text-slate-600 hover:text-primary-dark'
+                      }`}
+                    >
                       Skills
                     </button>
-                    <button className="pb-4 px-4 font-semibold text-slate-600 hover:text-primary-dark">
+                    <button
+                      onClick={() => setEditModalTab('resume')}
+                      className={`pb-4 px-4 font-semibold border-b-2 transition-colors ${
+                        editModalTab === 'resume'
+                          ? 'border-primary-dark text-primary-dark'
+                          : 'border-transparent text-slate-600 hover:text-primary-dark'
+                      }`}
+                    >
                       Resume
                     </button>
                   </>
@@ -639,109 +916,281 @@ const ProfilePageNew = () => {
               </div>
 
               {/* Form Fields */}
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">
-                    Full Name
-                  </label>
-                  <input
-                    type="text"
-                    value={authUser?.name || ''}
-                    disabled
-                    className="w-full px-4 py-2 border border-slate-200 rounded-lg bg-slate-100"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">
-                    Email
-                  </label>
-                  <input
-                    type="email"
-                    value={authUser?.email || ''}
-                    disabled
-                    className="w-full px-4 py-2 border border-slate-200 rounded-lg bg-slate-100"
-                  />
-                </div>
-
-                <div className="grid md:grid-cols-2 gap-4">
+              {editModalTab === 'basic' && (
+                <div className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-slate-700 mb-2">
-                      Degree
+                      Full Name
                     </label>
                     <input
                       type="text"
-                      value={editForm.education?.degree || ''}
-                      onChange={(e) =>
-                        setEditForm({
-                          ...editForm,
-                          education: { ...editForm.education, degree: e.target.value },
-                        })
-                      }
-                      className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-dark"
-                      placeholder="B.Tech Computer Science"
+                      value={authUser?.name || ''}
+                      disabled
+                      className="w-full px-4 py-2 border border-slate-200 rounded-lg bg-slate-100"
                     />
                   </div>
 
                   <div>
                     <label className="block text-sm font-medium text-slate-700 mb-2">
-                      Institution
+                      Email
                     </label>
                     <input
-                      type="text"
-                      value={editForm.education?.institution || ''}
-                      onChange={(e) =>
-                        setEditForm({
-                          ...editForm,
-                          education: { ...editForm.education, institution: e.target.value },
-                        })
-                      }
-                      className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-dark"
-                      placeholder="MIT"
+                      type="email"
+                      value={authUser?.email || ''}
+                      disabled
+                      className="w-full px-4 py-2 border border-slate-200 rounded-lg bg-slate-100"
                     />
+                  </div>
+
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 mb-2">
+                        Degree
+                      </label>
+                      <input
+                        type="text"
+                        value={editForm.education?.degree || ''}
+                        onChange={(e) =>
+                          setEditForm({
+                            ...editForm,
+                            education: { ...editForm.education, degree: e.target.value },
+                          })
+                        }
+                        className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-dark"
+                        placeholder="B.Tech Computer Science"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 mb-2">
+                        Institution
+                      </label>
+                      <input
+                        type="text"
+                        value={editForm.education?.institution || ''}
+                        onChange={(e) =>
+                          setEditForm({
+                            ...editForm,
+                            education: { ...editForm.education, institution: e.target.value },
+                          })
+                        }
+                        className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-dark"
+                        placeholder="MIT"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 mb-2">
+                        Graduation Year
+                      </label>
+                      <input
+                        type="number"
+                        value={editForm.education?.year || ''}
+                        onChange={(e) =>
+                          setEditForm({
+                            ...editForm,
+                            education: { ...editForm.education, year: parseInt(e.target.value) },
+                          })
+                        }
+                        className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-dark"
+                        placeholder="2024"
+                      />
+                    </div>
                   </div>
 
                   <div>
                     <label className="block text-sm font-medium text-slate-700 mb-2">
-                      Graduation Year
+                      About
                     </label>
-                    <input
-                      type="number"
-                      value={editForm.education?.year || ''}
-                      onChange={(e) =>
-                        setEditForm({
-                          ...editForm,
-                          education: { ...editForm.education, year: parseInt(e.target.value) },
-                        })
-                      }
+                    <textarea
+                      value={editForm.about}
+                      onChange={(e) => setEditForm({ ...editForm, about: e.target.value })}
                       className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-dark"
-                      placeholder="2024"
+                      placeholder="Tell us about yourself..."
+                      rows={4}
+                      maxLength={500}
                     />
+                    <p className="text-sm text-slate-500 mt-2">
+                      {editForm.about.length}/500 characters
+                    </p>
                   </div>
                 </div>
+              )}
 
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">
-                    About
-                  </label>
-                  <textarea
-                    value={editForm.about}
-                    onChange={(e) => setEditForm({ ...editForm, about: e.target.value })}
-                    className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-dark"
-                    placeholder="Tell us about yourself..."
-                    rows={4}
-                    maxLength={500}
-                  />
-                  <p className="text-sm text-slate-500 mt-2">
-                    {editForm.about.length}/500 characters
-                  </p>
+              {editModalTab === 'skills' && (
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                      Your Skills
+                    </label>
+                    <p className="text-sm text-slate-500 mb-3">
+                      Type a skill and press Enter to add it. Skills used in your verified GitHub projects automatically receive bonus scoring.
+                    </p>
+                    <div className="flex gap-2 mb-3">
+                      <input
+                        type="text"
+                        value={skillInput}
+                        onChange={(e) => setSkillInput(e.target.value)}
+                        onKeyPress={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            handleAddSkill();
+                          }
+                        }}
+                        className="flex-1 px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-dark"
+                        placeholder="e.g., React, Node.js, Python"
+                      />
+                      <button
+                        onClick={handleAddSkill}
+                        className="px-4 py-2 bg-primary-dark text-white rounded-lg hover:bg-slate-800"
+                      >
+                        Add
+                      </button>
+                    </div>
+                    {editForm.skills && editForm.skills.length > 0 && (
+                      <div className="flex flex-wrap gap-2">
+                        {editForm.skills.map((skill, idx) => (
+                          <span
+                            key={idx}
+                            className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm flex items-center gap-2"
+                          >
+                            {typeof skill === 'object' ? skill.name : skill}
+                            <button
+                              onClick={() => handleRemoveSkill(idx)}
+                              className="text-blue-700 hover:text-blue-900"
+                            >
+                              ✕
+                            </button>
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Skill Score Display */}
+                  {scoreCard && (
+                    <div className="bg-slate-50 rounded-lg border border-slate-200 p-4">
+                      <div className="flex justify-between items-center mb-2">
+                        <p className="text-sm font-semibold text-slate-700">Skills Score</p>
+                        <p className="text-sm font-semibold text-slate-700">
+                          {scoreCard.skills || 0}/40
+                        </p>
+                      </div>
+                      <div className="w-full bg-slate-200 rounded-full h-2">
+                        <div
+                          className="bg-blue-500 h-2 rounded-full"
+                          style={{ width: `${(scoreCard.skills || 0) / 40 * 100}%` }}
+                        ></div>
+                      </div>
+                      <p className="text-xs text-slate-500 mt-2">
+                        Scoring: declaration (20%) + resume mention (30%) + project usage (50%) per skill
+                      </p>
+                    </div>
+                  )}
+
+                  <button
+                    onClick={handleSaveProfile}
+                    disabled={verifying}
+                    className="w-full px-6 py-3 bg-primary-dark text-white rounded-lg hover:bg-slate-800 disabled:opacity-50 font-semibold"
+                  >
+                    {verifying ? 'Saving...' : 'Save + re-score'}
+                  </button>
                 </div>
-              </div>
+              )}
 
-              {!canAccessRestrictedFeatures && (
+              {editModalTab === 'resume' && (
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                      Upload Resume
+                    </label>
+                    <p className="text-sm text-slate-500 mb-3">
+                      Upload your latest resume in PDF format. It will be automatically scanned for ATS scoring.
+                    </p>
+                    
+                    {profile?.resume_url ? (
+                      <div className="bg-slate-50 rounded-lg border border-slate-200 p-4 mb-4">
+                        <div className="flex justify-between items-start mb-3">
+                          <div>
+                            <p className="font-semibold text-slate-900">Current Resume</p>
+                            <p className="text-sm text-slate-600">
+                              Uploaded {resumeScore?.meta?.scored_at ? new Date(resumeScore.meta.scored_at).toLocaleDateString() : 'recently'}
+                            </p>
+                          </div>
+                          <div className="text-right">
+                            <div className="text-4xl font-bold text-primary-dark">{resumeScore.final_score || 0}</div>
+                            <p className="text-xs text-slate-500">/100</p>
+                          </div>
+                        </div>
+                        <a
+                          href={profile.resume_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-block px-4 py-2 bg-primary-dark text-white rounded-lg hover:bg-slate-800 text-sm"
+                        >
+                          Download Resume
+                        </a>
+                      </div>
+                    ) : (
+                      <div className="border-2 border-dashed border-slate-300 rounded-lg p-8 text-center mb-4">
+                        <div className="text-4xl mb-4">📄</div>
+                        <p className="text-slate-600 mb-4">Upload your resume</p>
+                        <input
+                          type="file"
+                          accept=".pdf"
+                          onChange={handleResumeUpload}
+                          disabled={resumeUploading}
+                          className="mx-auto"
+                        />
+                        <p className="text-xs text-slate-500 mt-2">
+                          Supported format: PDF only. Max file size: 5MB.
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Replace Resume Section */}
+                    <div className="border-2 border-dashed border-slate-300 rounded-lg p-6 text-center">
+                      <p className="font-semibold text-slate-900 mb-2">Replace resume</p>
+                      <p className="text-sm text-slate-600 mb-4">
+                        Upload a new PDF resume. It will be automatically scored by our ATS engine.
+                      </p>
+                      <input
+                        type="file"
+                        accept=".pdf"
+                        onChange={handleResumeUpload}
+                        disabled={resumeUploading}
+                        className="mx-auto"
+                      />
+                      <p className="text-xs text-slate-500 mt-2">
+                        Supported format: PDF only. Max file size: 5MB. Your resume will be re-scored immediately after upload.
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Resume Score Display */}
+                  {resumeScore && (
+                    <div className="bg-slate-50 rounded-lg border border-slate-200 p-4">
+                      <div className="flex justify-between items-center mb-2">
+                        <p className="text-sm font-semibold text-slate-700">Resume Score</p>
+                        <p className="text-sm font-semibold text-slate-700">
+                          {scoreCard?.resume || 0}/30
+                        </p>
+                      </div>
+                      <div className="w-full bg-slate-200 rounded-full h-2">
+                        <div
+                          className="bg-green-500 h-2 rounded-full"
+                          style={{ width: `${(scoreCard?.resume || 0) / 30 * 100}%` }}
+                        ></div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {!canAccessRestrictedFeatures && editModalTab !== 'basic' && (
                 <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
                   <p className="text-sm text-yellow-800">
-                    ⚠️ Skills and Resume sections are locked until GitHub verification is complete.
+                    ⚠️ This section is locked until GitHub verification is complete.
                   </p>
                 </div>
               )}

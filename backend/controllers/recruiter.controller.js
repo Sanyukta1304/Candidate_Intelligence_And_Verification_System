@@ -67,19 +67,31 @@ exports.getCandidates = async (req, res) => {
     // Execute query - no need for separate select since we're using populate
     const candidates = await query;
 
+    // Transform data: add 'name' field from user_id.username
+    const transformedCandidates = candidates.map(candidate => {
+      const candidateObj = candidate.toObject ? candidate.toObject() : candidate;
+      return {
+        ...candidateObj,
+        name: candidateObj.user_id?.username || 'Unknown',
+        university: candidateObj.education?.institution || 'N/A',
+        score: candidateObj.total_score || 0,
+        topSkills: candidateObj.skills?.slice(0, 5).map(s => s.name) || []
+      };
+    });
+
     res.json({
       success: true,
-      count: candidates.length,
+      count: transformedCandidates.length,
       message: 'Showing only verified candidates (GitHub verified)',
       filters_applied: {
         verified: 'MANDATORY - Only verified candidates shown',
         minScore: minScore ? Number(minScore) : null,
         skill: skill || null,
         sortBy: sortBy || 'desc',
-        resultsShown: candidates.length,
+        resultsShown: transformedCandidates.length,
         topLimit: queryLimit || limit || 'all'
       },
-      data: candidates
+      data: transformedCandidates
     });
   } catch (error) {
     res.status(500).json({
@@ -140,8 +152,8 @@ exports.getCandidateById = async (req, res) => {
       }
     }
 
-    // Get candidate details
-    const candidate = await Candidate.findById(candidateId);
+    // Get candidate details with populated user info
+    const candidate = await Candidate.findById(candidateId).populate('user_id', 'username email');
     
     if (!candidate) {
       return res.status(404).json({
@@ -150,27 +162,24 @@ exports.getCandidateById = async (req, res) => {
       });
     }
 
-    if (!candidate) {
-      return res.status(404).json({
-        success: false,
-        message: 'Candidate not found',
-      });
-    }
-
-    // 🔔 Trigger notification to candidate
-    if (candidate.user_id) {
-      await emitNotification({
-        recipient_id: candidate.user_id,
-        type: 'profile_viewed',
-        recruiter_id: recruiter._id,
-        recruiter_name: recruiter.name || recruiter.company_name || 'Recruiter',
-        company_name: recruiter.company_name || '',
-      });
-    }
+    // Transform candidate data to include name field
+    const candidateObj = candidate.toObject ? candidate.toObject() : candidate;
+    const transformedCandidate = {
+      ...candidateObj,
+      name: candidateObj.user_id?.username || 'Unknown',
+      university: candidateObj.education?.institution || 'N/A',
+      score: candidateObj.total_score || 0,
+      topSkills: candidateObj.skills?.slice(0, 5).map(s => s.name) || [],
+      scoreBreakdown: {
+        resume: candidateObj.resume_score || 0,
+        skills: candidateObj.skills_score || 0,
+        projects: candidateObj.projects_score || 0
+      }
+    };
 
     res.json({
       success: true,
-      data: candidate,
+      data: transformedCandidate,
     });
   } catch (error) {
     res.status(500).json({
@@ -313,7 +322,14 @@ exports.unstarCandidate = async (req, res) => {
 // ===============================
 exports.getStarred = async (req, res) => {
   try {
-    const recruiter = await Recruiter.findOne({ user_id: req.user.id }).populate('starred');
+    const recruiter = await Recruiter.findOne({ user_id: req.user.id })
+      .populate({
+        path: 'starred',
+        populate: {
+          path: 'user_id',
+          select: 'username email'
+        }
+      });
 
     if (!recruiter) {
       return res.status(404).json({
@@ -322,18 +338,22 @@ exports.getStarred = async (req, res) => {
       });
     }
 
-    if (!recruiter) {
-      return res.json({
-        success: true,
-        count: 0,
-        data: []
-      });
-    }
+    // Transform starred candidates data
+    const transformedStarred = recruiter.starred.map(candidate => {
+      const candidateObj = candidate.toObject ? candidate.toObject() : candidate;
+      return {
+        ...candidateObj,
+        name: candidateObj.user_id?.username || 'Unknown',
+        university: candidateObj.education?.institution || 'N/A',
+        score: candidateObj.total_score || 0,
+        topSkills: candidateObj.skills?.slice(0, 5).map(s => s.name) || []
+      };
+    });
 
     res.json({
       success: true,
-      count: recruiter.starred.length,
-      data: recruiter.starred || []
+      count: transformedStarred.length,
+      data: transformedStarred
     });
   } catch (error) {
     res.status(500).json({
@@ -365,10 +385,16 @@ exports.getStats = async (req, res) => {
       });
     }
 
+    // Get total candidates and github verified count
+    const totalCandidates = await Candidate.countDocuments();
+    const githubVerified = await Candidate.countDocuments({ github_verified: true });
+
     const stats = {
       profilesViewed: recruiter.profiles_viewed_count,
       profilesStarred: recruiter.profiles_starred_count,
-      averageScore: Math.round(averageScore * 100) / 100
+      averageScore: Math.round(averageScore * 100) / 100,
+      totalCandidates: totalCandidates,
+      githubVerified: githubVerified
     };
 
     res.json({
@@ -449,6 +475,85 @@ exports.updateProfile = async (req, res) => {
       data: recruiter
     });
 
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+
+// ===============================
+// 🕐 9. GET RECENT ACTIVITY
+// ===============================
+exports.getActivity = async (req, res) => {
+  try {
+    const { limit = 10 } = req.query;
+    
+    const recruiter = await Recruiter.findOne({ user_id: req.user.id })
+      .populate({
+        path: 'viewed_profiles.candidate_id',
+        populate: {
+          path: 'user_id',
+          select: 'username'
+        }
+      })
+      .populate({
+        path: 'starred',
+        populate: {
+          path: 'user_id',
+          select: 'username'
+        }
+      });
+
+    if (!recruiter) {
+      return res.json({
+        success: true,
+        data: {
+          recentViews: [],
+          recentStars: [],
+          totalActivity: 0
+        }
+      });
+    }
+
+    // Get recent views (sorted by date)
+    const recentViews = recruiter.viewed_profiles
+      .sort((a, b) => new Date(b.viewed_at) - new Date(a.viewed_at))
+      .slice(0, limit)
+      .map(view => ({
+        action: 'viewed',
+        candidate: {
+          _id: view.candidate_id._id,
+          name: view.candidate_id.user_id?.username || 'Unknown',
+          total_score: view.candidate_id.total_score,
+          education: view.candidate_id.education
+        },
+        timestamp: view.viewed_at
+      }));
+
+    // Get recent stars
+    const recentStars = recruiter.starred
+      .slice(0, limit)
+      .map(candidate => ({
+        action: 'starred',
+        candidate: {
+          _id: candidate._id,
+          name: candidate.user_id?.username || 'Unknown',
+          total_score: candidate.total_score,
+          education: candidate.education
+        },
+        timestamp: candidate.updatedAt || new Date()
+      }));
+
+    res.json({
+      success: true,
+      data: {
+        recentViews,
+        recentStars,
+        totalActivity: recentViews.length + recentStars.length
+      }
+    });
   } catch (error) {
     res.status(500).json({
       success: false,
