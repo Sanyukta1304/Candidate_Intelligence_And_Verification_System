@@ -162,7 +162,15 @@ exports.getCandidateById = async (req, res) => {
       });
     }
 
-    // Transform candidate data to include name field
+    // Get resume score details
+    const ResumeScore = require('../models/ResumeScore');
+    const resumeScore = await ResumeScore.findOne({ candidate_id: candidateId });
+
+    // Get all projects for the candidate
+    const Project = require('../models/Project');
+    const projects = await Project.find({ candidate_id: candidateId });
+
+    // Transform candidate data to include all required fields
     const candidateObj = candidate.toObject ? candidate.toObject() : candidate;
     const transformedCandidate = {
       ...candidateObj,
@@ -170,11 +178,37 @@ exports.getCandidateById = async (req, res) => {
       university: candidateObj.education?.institution || 'N/A',
       score: candidateObj.total_score || 0,
       topSkills: candidateObj.skills?.slice(0, 5).map(s => s.name) || [],
+      education: {
+        ...candidateObj.education,
+        graduation_year: candidateObj.education?.year || candidateObj.education?.graduation_year
+      },
       scoreBreakdown: {
         resume: candidateObj.resume_score || 0,
         skills: candidateObj.skills_score || 0,
         projects: candidateObj.projects_score || 0
-      }
+      },
+      // Add resume score details
+      resumeScoreDetails: resumeScore ? {
+        final_score: resumeScore.final_score || 0,
+        detected_role: resumeScore.detected_role || 'Unknown',
+        dimensions: resumeScore.dimension_scores || {},
+        penalties: resumeScore.penalties_applied || {}
+      } : null,
+      // Add projects
+      projects: projects.map(p => ({
+        _id: p._id,
+        title: p.title,
+        description: p.description,
+        github_url: p.github_link,
+        technologies: p.tech_stack || [],
+        total_commits: p.total_commits || 0,
+        your_commits: p.user_commits || 0,
+        visibility: p.is_public ? 'Public' : 'Private',
+        has_readme: p.has_readme,
+        last_push: p.last_pushed_at ? new Date(p.last_pushed_at).toLocaleDateString() : 'Unknown',
+        score: p.project_score || 0,
+        score_breakdown: p.score_breakdown || {}
+      }))
     };
 
     res.json({
@@ -520,7 +554,6 @@ exports.getActivity = async (req, res) => {
     // Get recent views (sorted by date)
     const recentViews = recruiter.viewed_profiles
       .sort((a, b) => new Date(b.viewed_at) - new Date(a.viewed_at))
-      .slice(0, limit)
       .map(view => ({
         action: 'viewed',
         candidate: {
@@ -532,9 +565,8 @@ exports.getActivity = async (req, res) => {
         timestamp: view.viewed_at
       }));
 
-    // Get recent stars
+    // Get recent stars (sorted by updatedAt)
     const recentStars = recruiter.starred
-      .slice(0, limit)
       .map(candidate => ({
         action: 'starred',
         candidate: {
@@ -546,13 +578,14 @@ exports.getActivity = async (req, res) => {
         timestamp: candidate.updatedAt || new Date()
       }));
 
+    // Merge and sort all activities by timestamp (most recent first)
+    const allActivities = [...recentViews, ...recentStars]
+      .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
+      .slice(0, limit);
+
     res.json({
       success: true,
-      data: {
-        recentViews,
-        recentStars,
-        totalActivity: recentViews.length + recentStars.length
-      }
+      data: allActivities
     });
   } catch (error) {
     res.status(500).json({

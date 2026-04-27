@@ -1,16 +1,21 @@
 import React, { useState } from 'react';
+import { triggerScore } from '../../api/score.api';
 
 export const InlineResumeEditor = ({
   resumeUrl = null,
   resumeScore = null,
   scoreCard = null,
   onUpload,
+  onScoreSubmit,
   loading = false,
+  profileId = null,
 }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [scoring, setScoring] = useState(false);
   const [uploadSuccess, setUploadSuccess] = useState(false);
   const [uploadedFileName, setUploadedFileName] = useState(null);
+  const [selectedFile, setSelectedFile] = useState(null);
 
   const handleResumeUpload = async (e) => {
     const file = e.target.files?.[0];
@@ -33,18 +38,38 @@ export const InlineResumeEditor = ({
       setUploadSuccess(false);
       await onUpload(file);
       setUploadedFileName(file.name);
+      setSelectedFile(file);
       setUploadSuccess(true);
-      // Don't auto-close - let user confirm
-      setTimeout(() => {
-        setUploadSuccess(false);
-        setIsEditing(false);
-      }, 2000); // Auto-close after 2 seconds
     } catch (error) {
       console.error('Upload failed:', error);
       alert('Failed to upload resume. Please try again.');
     } finally {
       setUploading(false);
       e.target.value = '';
+    }
+  };
+
+  const handleScoreSubmit = async () => {
+    try {
+      setScoring(true);
+      // Call the score trigger API
+      if (profileId) {
+        await triggerScore(profileId);
+        if (onScoreSubmit) {
+          await onScoreSubmit();
+        }
+      }
+      // Close modal after successful scoring
+      setTimeout(() => {
+        setIsEditing(false);
+        setUploadSuccess(false);
+        setSelectedFile(null);
+      }, 1500);
+    } catch (error) {
+      console.error('Scoring failed:', error);
+      alert('Failed to score resume. Please try again.');
+    } finally {
+      setScoring(false);
     }
   };
 
@@ -135,12 +160,29 @@ export const InlineResumeEditor = ({
         <div className="py-12 text-center">
           <div className="text-5xl mb-4">✅</div>
           <p className="font-semibold text-slate-900 mb-2">Resume uploaded successfully!</p>
-          <p className="text-sm text-slate-600 mb-2">File: {uploadedFileName}</p>
+          <p className="text-sm text-slate-600 mb-6">File: {uploadedFileName}</p>
           <p className="text-xs text-slate-500 mb-6">
-            Your resume is being scored. This window will close automatically.
+            Click the Submit button below to score your resume with our ATS engine.
           </p>
-          <div className="inline-block">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-dark"></div>
+          <div className="flex gap-3 pt-6 border-t border-slate-200">
+            <button
+              onClick={() => {
+                setIsEditing(false);
+                setUploadSuccess(false);
+                setSelectedFile(null);
+              }}
+              className="flex-1 px-6 py-3 border border-slate-200 rounded-lg hover:bg-slate-50 font-semibold"
+              disabled={scoring}
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleScoreSubmit}
+              disabled={scoring || !profileId}
+              className="flex-1 px-6 py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed font-semibold"
+            >
+              {scoring ? 'Submitting...' : 'Submit & Score'}
+            </button>
           </div>
         </div>
       ) : (
@@ -169,11 +211,11 @@ export const InlineResumeEditor = ({
                 <div className="inline-block">
                   <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary-dark"></div>
                 </div>
-                <p className="text-sm text-slate-600 mt-2">Uploading and scoring your resume...</p>
+                <p className="text-sm text-slate-600 mt-2">Uploading your resume...</p>
               </div>
             )}
             <p className="text-xs text-slate-500 mt-4">
-              Your resume will be re-scored immediately after upload.
+              After upload, click Submit to score your resume with ATS analysis.
             </p>
           </div>
 
@@ -184,18 +226,6 @@ export const InlineResumeEditor = ({
               </p>
             </div>
           )}
-        </div>
-      )}
-
-      {/* Action Button */}
-      {!uploadSuccess && (
-        <div className="flex gap-3 mt-6 pt-6 border-t border-slate-200">
-          <button
-            onClick={() => setIsEditing(false)}
-            className="flex-1 px-6 py-2 border border-slate-200 rounded-lg hover:bg-slate-50 font-semibold"
-          >
-            Cancel
-          </button>
         </div>
       )}
     </div>

@@ -1,3 +1,8 @@
+const fs = require("fs").promises;
+const path = require("path");
+const pdfParse = require("pdf-parse");
+const mammoth = require("mammoth");
+
 const Candidate = require("../models/Candidate");
 const Project = require("../models/Project");
 const ResumeScore = require("../models/ResumeScore");
@@ -5,6 +10,36 @@ const ResumeScore = require("../models/ResumeScore");
 const { scoreProject } = require("./projectScorer");
 const { scoreSkills } = require("./skillsScorer");
 const { scoreResume } = require("./resumeScorer");
+
+/**
+ * Read resume file from uploads folder and extract text
+ * Supports PDF and DOCX formats
+ */
+async function getResumeText(resumeFilename) {
+  if (!resumeFilename) {
+    return "";
+  }
+
+  try {
+    const filePath = path.join(__dirname, "../uploads/resumes", resumeFilename);
+    const buffer = await fs.readFile(filePath);
+    
+    if (resumeFilename.toLowerCase().endsWith(".pdf")) {
+      // Parse PDF
+      const data = await pdfParse(buffer);
+      return data.text || "";
+    } else if (resumeFilename.toLowerCase().endsWith(".docx")) {
+      // Parse DOCX
+      const result = await mammoth.extractRawText({ buffer });
+      return result.value || "";
+    }
+    
+    return "";
+  } catch (error) {
+    console.error(`Error reading resume file ${resumeFilename}:`, error.message);
+    return "";
+  }
+}
 
 async function orchestrate(candidateId) {
   try {
@@ -33,8 +68,16 @@ async function orchestrate(candidateId) {
     // 4. Filter verified projects
     const verifiedProjects = projects.filter((p) => p.verified);
 
-    // 5. Resume scoring (safe fallback if no resume uploaded)
-    const resumeResult = scoreResume(candidate.resume_text || "");
+    // 5. Resume scoring - Read actual resume file and score it
+    let resumeText = "";
+    
+    if (candidate.resume_url) {
+      // Read resume file from uploads folder
+      resumeText = await getResumeText(candidate.resume_url);
+      console.log(`[Orchestrator] Resume text extracted: ${resumeText.length} characters`);
+    }
+    
+    const resumeResult = scoreResume(resumeText || "");
 
     const atsScore =
       resumeResult && typeof resumeResult.total_ats_score === "number"
@@ -81,6 +124,7 @@ async function orchestrate(candidateId) {
       {
         ...(resumeResult || {}),
         total_ats_score: atsScore,
+        final_score: atsScore,  // Map total_ats_score to final_score for ResumeScore model
         scored_at: new Date(),
       },
       { upsert: true, new: true }
@@ -100,4 +144,5 @@ async function orchestrate(candidateId) {
 
 module.exports = {
   orchestrate,
+  getResumeText,
 };

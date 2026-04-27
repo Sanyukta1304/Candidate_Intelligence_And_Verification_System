@@ -31,3 +31,4 @@ Thumbs.db
 .env.production.local
 tmp/
 temp/
+.github/

@@ -6,6 +6,7 @@ import { projectService } from '../../api/projectService';
 import { triggerScore } from '../../api/score.api';
 import { InlineSkillEditor } from '../../components/candidate/InlineSkillEditor';
 import { InlineResumeEditor } from '../../components/candidate/InlineResumeEditor';
+import { ResumeScoreDashboard } from '../../components/candidate/ResumeScoreDashboard';
 
 const ProfilePageNew = () => {
   const navigate = useNavigate();
@@ -241,15 +242,24 @@ const ProfilePageNew = () => {
           resume_url: response.data.resume_url
         }));
 
-        // Reload profile data to get updated resume score
-        await loadProfileData();
-        setSuccessMessage('Resume uploaded and scored successfully!');
+        setSuccessMessage('Resume uploaded successfully! Click Submit to score.');
         setTimeout(() => setSuccessMessage(''), 3000);
       }
     } catch (err) {
       setError(err.message || 'Failed to upload resume');
     } finally {
       setResumeUploading(false);
+    }
+  };
+
+  // Handle resume score submission
+  const handleResumeScoreSubmit = async () => {
+    try {
+      await loadProfileData();
+      setSuccessMessage('Resume scored successfully!');
+      setTimeout(() => setSuccessMessage(''), 3000);
+    } catch (err) {
+      setError(err.message || 'Failed to load resume score');
     }
   };
 
@@ -637,147 +647,15 @@ const ProfilePageNew = () => {
                   scoreCard={scoreCard}
                   loading={resumeUploading}
                   onUpload={handleResumeUpload}
+                  onScoreSubmit={handleResumeScoreSubmit}
+                  profileId={profile?._id}
                 />
 
-                {/* Resume Score Details */}
-                {resumeScore && (
-                  <div className="bg-white rounded-xl border border-slate-200 shadow-soft-lg p-8">
-                    <h3 className="text-xl font-semibold text-primary-dark mb-6">Resume + ATS Score</h3>
-                    
-                    {/* Top Score Cards */}
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-                      <div className="bg-white rounded-lg border border-slate-200 p-4">
-                        <p className="text-xs font-medium text-slate-600 mb-1">ATS Score</p>
-                        <p className="text-2xl font-bold text-primary-dark">{resumeScore.final_score || 0}/100</p>
-                      </div>
-                      <div className="bg-white rounded-lg border border-slate-200 p-4">
-                        <p className="text-xs font-medium text-slate-600 mb-1">Section score</p>
-                        <p className="text-2xl font-bold text-primary-dark">{resumeScore.dimension_scores?.structure || 0}/100</p>
-                      </div>
-                      <div className="bg-white rounded-lg border border-slate-200 p-4">
-                        <p className="text-xs font-medium text-slate-600 mb-1">Keyword score</p>
-                        <p className="text-2xl font-bold text-primary-dark">{resumeScore.dimension_scores?.market_demand || 0}/100</p>
-                      </div>
-                      <div className="bg-white rounded-lg border border-slate-200 p-4">
-                        <p className="text-xs font-medium text-slate-600 mb-1">Format score</p>
-                        <p className="text-2xl font-bold text-primary-dark">{resumeScore.dimension_scores?.evidence || 0}/100</p>
-                      </div>
-                    </div>
-
-                    {/* Main Content Grid */}
-                    <div className="grid md:grid-cols-3 gap-6">
-                      {/* Left Column - Section Analysis */}
-                      <div className="bg-white rounded-lg border border-slate-200 p-6">
-                        <h4 className="font-semibold text-slate-900 mb-4">Section Analysis</h4>
-                        <div className="space-y-3">
-                          {resumeScore.section_presence && Object.entries(resumeScore.section_presence).map(([section, present]) => (
-                            <div key={section} className="flex justify-between items-center">
-                              <span className="text-sm capitalize text-slate-600">{section}</span>
-                              <span className={`px-3 py-1 rounded-full text-xs font-medium ${present ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                                {present ? 'Present' : 'Missing'}
-                              </span>
-                            </div>
-                          ))}
-                        </div>
-                        <p className="text-xs text-slate-500 mt-4 italic">Add missing sections to improve your ATS score</p>
-                      </div>
-
-                      {/* Middle Column - ATS Score Breakdown */}
-                      <div className="bg-white rounded-lg border border-slate-200 p-6">
-                        <h4 className="font-semibold text-slate-900 mb-4">ATS Score Breakdown</h4>
-                        <div className="flex justify-center mb-4">
-                          {/* Simple CSS Donut Chart */}
-                          <div className="relative w-32 h-32">
-                            <svg className="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
-                              <path
-                                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                                fill="none"
-                                stroke="#e2e8f0"
-                                strokeWidth="3"
-                              />
-                              <path
-                                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                                fill="none"
-                                stroke="#22c55e"
-                                strokeWidth="3"
-                                strokeDasharray={`${(resumeScore.dimension_scores?.structure || 0) / 100 * 100}, 100`}
-                              />
-                            </svg>
-                            <div className="absolute inset-0 flex items-center justify-center">
-                              <span className="text-lg font-bold text-slate-900">{resumeScore.dimension_scores?.structure || 0}/100</span>
-                            </div>
-                          </div>
-                        </div>
-                        <div className="space-y-2">
-                          <div className="flex items-center gap-2">
-                            <div className="w-3 h-3 rounded-full bg-green-500"></div>
-                            <span className="text-sm text-slate-600">Section completeness: {resumeScore.dimension_scores?.structure || 0}/100</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <div className="w-3 h-3 rounded-full bg-blue-500"></div>
-                            <span className="text-sm text-slate-600">Keyword density: {resumeScore.dimension_scores?.market_demand || 0}/100</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <div className="w-3 h-3 rounded-full bg-orange-500"></div>
-                            <span className="text-sm text-slate-600">Format score: {resumeScore.dimension_scores?.evidence || 0}/100</span>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Right Column - Signal Strength */}
-                      <div className="bg-white rounded-lg border border-slate-200 p-6">
-                        <h4 className="font-semibold text-slate-900 mb-4">Signal Strength</h4>
-                        <div className="space-y-4">
-                          <div>
-                            <div className="flex justify-between mb-1">
-                              <span className="text-sm text-slate-600">Section completeness</span>
-                              <span className="text-sm font-medium text-slate-900">
-                                {resumeScore.dimension_scores?.structure || 0}/100
-                              </span>
-                            </div>
-                            <div className="w-full bg-slate-200 rounded-full h-2">
-                              <div
-                                className="bg-yellow-500 h-2 rounded-full"
-                                style={{ width: `${(resumeScore.dimension_scores?.structure || 0) / 100 * 100}%` }}
-                              ></div>
-                            </div>
-                            <p className="text-xs text-slate-500 mt-1">Moderate</p>
-                          </div>
-                          <div>
-                            <div className="flex justify-between mb-1">
-                              <span className="text-sm text-slate-600">Action keyword density</span>
-                              <span className="text-sm font-medium text-slate-900">
-                                {resumeScore.dimension_scores?.market_demand || 0}/100
-                              </span>
-                            </div>
-                            <div className="w-full bg-slate-200 rounded-full h-2">
-                              <div
-                                className="bg-green-500 h-2 rounded-full"
-                                style={{ width: `${(resumeScore.dimension_scores?.market_demand || 0) / 100 * 100}%` }}
-                              ></div>
-                            </div>
-                            <p className="text-xs text-slate-500 mt-1">Strong</p>
-                          </div>
-                          <div>
-                            <div className="flex justify-between mb-1">
-                              <span className="text-sm text-slate-600">Format quality</span>
-                              <span className="text-sm font-medium text-slate-900">
-                                {resumeScore.dimension_scores?.evidence || 0}/100
-                              </span>
-                            </div>
-                            <div className="w-full bg-slate-200 rounded-full h-2">
-                              <div
-                                className="bg-blue-500 h-2 rounded-full"
-                                style={{ width: `${(resumeScore.dimension_scores?.evidence || 0) / 100 * 100}%` }}
-                              ></div>
-                            </div>
-                            <p className="text-xs text-slate-500 mt-1">Strong</p>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
+                {/* Resume Score Dashboard - New Redesigned Layout */}
+                <ResumeScoreDashboard 
+                  resumeScore={resumeScore}
+                  scoreCard={scoreCard}
+                />
               </div>
             )}
           </div>

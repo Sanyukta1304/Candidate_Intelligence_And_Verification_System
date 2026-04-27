@@ -17,10 +17,30 @@ const RecruiterDashboardPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // Initial load of dashboard data
   useEffect(() => {
     if (isAuthenticated && user?.role === 'recruiter') {
       loadDashboardData();
     }
+  }, [isAuthenticated, user]);
+
+  // Real-time activity polling
+  useEffect(() => {
+    if (!isAuthenticated || user?.role !== 'recruiter') return;
+
+    // Poll for activity updates every 5 seconds
+    const activityInterval = setInterval(async () => {
+      try {
+        const activityData = await recruiterService.getActivity(10);
+        const newActivities = activityData?.data || activityData || [];
+        setActivities(newActivities);
+      } catch (err) {
+        console.warn('[ActivityPolling] Failed to fetch activities:', err.message);
+        // Don't show error for polling failures, silently retry
+      }
+    }, 5000); // Poll every 5 seconds
+
+    return () => clearInterval(activityInterval);
   }, [isAuthenticated, user]);
 
   const loadDashboardData = async () => {

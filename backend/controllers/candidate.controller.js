@@ -231,49 +231,24 @@ exports.uploadResume = async (req, res, next) => {
       });
     }
 
-    // Score the resume using ATS Engine
-    console.log(`[Resume Upload] Scoring resume for user ${req.user.id}`);
-    const scoreResult = await scoreResume(filePath);
-
-    // Save score to ResumeScore collection
-    const resumeScore = await ResumeScore.findOneAndUpdate(
-      { candidate_id: candidate._id },
-      {
-        ...scoreResult,
-        candidate_id: candidate._id,
-        parse_success: scoreResult.parse_success !== false
-      },
-      { returnDocument: 'after', upsert: true }
-    );
-
+    // ✅ UPDATE: Just store the resume file, don't score yet
     // Update candidate with resume metadata
     await Candidate.findByIdAndUpdate(candidate._id, {
-      resume_text: scoreResult.raw_text || '',
-      resume_score: scoreResult.final_score || 0,
       resume_url: req.file.filename,
-      last_scored: new Date(),
-      total_score: scoreResult.final_score || 0
+      resume_uploaded_at: new Date()
     });
 
-    // Clean up uploaded file after processing
-    try {
-      await fs.unlink(filePath);
-    } catch (unlinkError) {
-      console.warn(`[Resume Upload] Could not delete file ${filePath}:`, unlinkError.message);
-    }
+    console.log(`[Resume Upload] File stored for user ${req.user.id}: ${req.file.filename}`);
 
-    // Return score result
+    // Return file info (user will submit separately to trigger scoring)
     res.status(200).json({
       success: true,
-      message: 'Resume scored successfully',
+      message: 'Resume uploaded successfully. Click Submit to score with ATS engine.',
       data: {
-        final_score: scoreResult.final_score,
-        detected_role: scoreResult.detected_role,
-        dimension_scores: scoreResult.dimension_scores,
-        skills_detected: scoreResult.skills_detected,
-        section_presence: scoreResult.section_presence,
-        improvement_suggestions: scoreResult.improvement_suggestions,
-        meta: scoreResult.meta
+        resume_url: req.file.filename,
+        filename: req.file.originalname,
+        file_size: req.file.size,
+        upload_time: new Date()
       }
     });
   } catch (error) {
