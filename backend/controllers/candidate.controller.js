@@ -231,6 +231,26 @@ exports.uploadResume = async (req, res, next) => {
       });
     }
 
+    // ✅ FIXED: Delete old resume before storing new one (single resume policy)
+    const oldResumeUrl = candidate.resume_url;
+    if (oldResumeUrl) {
+      try {
+        const oldResumePath = path.join(__dirname, "../uploads/resumes", oldResumeUrl);
+        // Check if file exists before trying to delete
+        try {
+          await fs.stat(oldResumePath);
+          await fs.unlink(oldResumePath);
+          console.log(`[Resume Upload] Old resume deleted: ${oldResumeUrl}`);
+        } catch (err) {
+          // File doesn't exist, that's ok
+          console.log(`[Resume Upload] Old resume file not found: ${oldResumeUrl}`);
+        }
+      } catch (error) {
+        console.error(`[Resume Upload] Error deleting old resume:`, error.message);
+        // Don't fail the upload if we can't delete the old file
+      }
+    }
+
     // ✅ UPDATE: Just store the resume file, don't score yet
     // Update candidate with resume metadata
     await Candidate.findByIdAndUpdate(candidate._id, {
@@ -290,5 +310,57 @@ exports.getResumeScore = async (req, res) => {
     res.json({ success: true, data: score });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// ✅ DOWNLOAD RESUME (Latest only)
+exports.downloadResume = async (req, res) => {
+  try {
+    const candidate = await Candidate.findOne({ user_id: req.user.id });
+
+    if (!candidate) {
+      return res.status(404).json({
+        success: false,
+        message: 'Candidate profile not found'
+      });
+    }
+
+    // ✅ Only serve the latest resume
+    if (!candidate.resume_url) {
+      return res.status(404).json({
+        success: false,
+        message: 'No resume found. Please upload a resume first.'
+      });
+    }
+
+    const resumePath = path.join(__dirname, "../uploads/resumes", candidate.resume_url);
+
+    // Check if file exists
+    try {
+      await fs.stat(resumePath);
+    } catch (err) {
+      return res.status(404).json({
+        success: false,
+        message: 'Resume file not found on server'
+      });
+    }
+
+    // Set response headers for file download
+    const fileName = `resume_${candidate._id}.${candidate.resume_url.split('.').pop()}`;
+    res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+    res.setHeader('Content-Type', 'application/octet-stream');
+
+    // Stream the file
+    const stream = require('fs').createReadStream(resumePath);
+    stream.pipe(res);
+
+    // Log the download
+    console.log(`[Resume Download] Candidate ${candidate._id} downloaded resume: ${candidate.resume_url}`);
+  } catch (error) {
+    console.error('[Resume Download] Error:', error.message);
+    res.status(500).json({
+      success: false,
+      message: 'Error downloading resume: ' + error.message
+    });
   }
 };

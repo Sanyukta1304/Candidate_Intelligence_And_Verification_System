@@ -7,16 +7,46 @@ const getNotifications = async (req, res) => {
     const candidate = await Candidate.findOne({ user_id: req.user.id });
 
     if (!candidate) {
-      return res.status(404).json({ message: "Candidate profile not found" });
+      return res.status(404).json({ 
+        success: false,
+        message: "Candidate profile not found" 
+      });
     }
 
     const notifications = await Notification.find({
       recipient_id: req.user.id,
     }).sort({ createdAt: -1 });
 
-    res.status(200).json(notifications);
+    // Transform notifications to include human-readable message
+    const transformedNotifications = notifications.map(notif => {
+      let message = '';
+      
+      if (notif.type === 'profile_viewed') {
+        message = `${notif.recruiter_name || 'A recruiter'} from ${notif.company_name || 'Unknown Company'} viewed your profile`;
+      } else if (notif.type === 'profile_starred') {
+        message = `${notif.recruiter_name || 'A recruiter'} from ${notif.company_name || 'Unknown Company'} starred your profile`;
+      }
+
+      return {
+        _id: notif._id,
+        type: notif.type,
+        message,
+        recruiter_name: notif.recruiter_name,
+        company_name: notif.company_name,
+        read: notif.read,
+        createdAt: notif.createdAt
+      };
+    });
+
+    res.status(200).json({
+      success: true,
+      data: transformedNotifications
+    });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ 
+      success: false,
+      message: error.message 
+    });
   }
 };
 

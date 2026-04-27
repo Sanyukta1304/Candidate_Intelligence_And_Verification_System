@@ -130,4 +130,34 @@ export const candidateService = {
       throw error.response?.data || error;
     }
   },
+
+  // GET /api/notifications - Get all notifications
+  getNotifications: async () => {
+    try {
+      const response = await axiosInstance.get('/api/notifications');
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error;
+    }
+  },
+
+  // PUT /api/notifications/:id/read - Mark notification as read
+  markNotificationRead: async (notificationId) => {
+    try {
+      const response = await axiosInstance.put(`/api/notifications/${notificationId}/read`);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error;
+    }
+  },
+
+  // PUT /api/notifications/read-all - Mark all notifications as read
+  markAllNotificationsRead: async () => {
+    try {
+      const response = await axiosInstance.put('/api/notifications/read-all');
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error;
+    }
+  },
 };

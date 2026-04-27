@@ -23,6 +23,8 @@ const CandidateSchema = new mongoose.Schema({
 
   resume_url: { type: String, default: null },
   resume_text: { type: String, default: null },
+  extracted_skills: [String], // Skills extracted from the uploaded resume content
+  resume_uploaded_at: { type: Date, default: null },
 
   resume_score: { type: Number, default: 0 },
   skills_score: { type: Number, default: 0 },

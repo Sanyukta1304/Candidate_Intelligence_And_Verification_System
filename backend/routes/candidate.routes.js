@@ -12,6 +12,8 @@ router.post('/github/verify', verifyToken, controller.verifyGithub);
 
 router.post('/resume', verifyToken, upload.single('resume'), controller.uploadResume);
 
+router.get('/resume-download', verifyToken, controller.downloadResume);
+
 router.get('/resume-score', verifyToken, controller.getResumeScore);
 
 module.exports = router;

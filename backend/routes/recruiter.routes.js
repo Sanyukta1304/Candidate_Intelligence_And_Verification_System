@@ -27,11 +27,14 @@ router.get('/candidates/:id', verifyToken, recruiterController.getCandidateById)
 router.post('/star/:candidateId', verifyToken, recruiterController.starCandidate);
 router.delete('/star/:candidateId', verifyToken, recruiterController.unstarCandidate);
 
-// ========================================
-// 📊 DASHBOARD (PROTECTED)
+// ========================================// 📊 DASHBOARD (PROTECTED)
 // ========================================
 router.get('/starred', verifyToken, recruiterController.getStarred);
 router.get('/stats', verifyToken, recruiterController.getStats);
 router.get('/activity', verifyToken, recruiterController.getActivity);
+
+// ========================================// � RESUME DOWNLOAD (PROTECTED)
+// ========================================
+router.get('/candidates/:candidateId/resume/download', verifyToken, recruiterController.downloadCandidateResume);
 
 module.exports = router;

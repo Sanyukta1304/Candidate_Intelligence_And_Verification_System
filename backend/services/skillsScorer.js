@@ -1,8 +1,26 @@
-function scoreSkills(skills = [], resumeText = "", verifiedProjects = []) {
+const { scoreResumeDeclaration } = require('./resumeSkillsExtractor');
+
+function scoreSkills(skills = [], resumeText = "", verifiedProjects = [], extractedSkills = []) {
   const lowerResumeText = (resumeText || "").toLowerCase();
+  const lowerExtractedSkills = (extractedSkills || []).map(s => s.toLowerCase());
 
   const scoredSkills = skills.map((skillObj) => {
     const skillName = (skillObj.name || "").toLowerCase().trim();
+
+    // ✅ VALIDATION: Check if skill exists in extracted skills from resume
+    const skillFoundInResume = lowerExtractedSkills.includes(skillName);
+
+    if (!skillFoundInResume) {
+      // Skill not found in uploaded resume - score as 0
+      return {
+        ...skillObj.toObject?.() ?? skillObj,
+        project_score: 0,
+        resume_score: 0,
+        decl_score: 0,
+        sub_score: 0,
+        validation_status: "Skill not found in uploaded resume"
+      };
+    }
 
     // Count how many verified projects use this skill
     const matchingProjects = verifiedProjects.filter((project) => {
@@ -23,24 +41,27 @@ function scoreSkills(skills = [], resumeText = "", verifiedProjects = []) {
       projectUsageScore = 70;
     }
 
-    // resume_mention score out of 100
-    const resumeMentionScore = lowerResumeText.includes(skillName) ? 100 : 0;
+    // ✅ FIXED: Resume declaration score using semantic extraction
+    // Using the new resumeSkillsExtractor function for proper context-based detection
+    const resumeDeclarationScore = scoreResumeDeclaration(skillName, resumeText);
 
     // declaration score out of 100
     const declarationScore = 100;
 
-    // Final sub score
+    // Final sub score using proper weighting
+    // Skill Score = (Project Usage × 0.5) + (Resume Declaration × 0.3) + (Skill Declaration × 0.2)
     const subScore =
       projectUsageScore * 0.5 +
-      resumeMentionScore * 0.3 +
+      resumeDeclarationScore * 0.3 +
       declarationScore * 0.2;
 
     return {
       ...skillObj.toObject?.() ?? skillObj,
       project_score: projectUsageScore,
-      resume_score: resumeMentionScore,
+      resume_score: resumeDeclarationScore,
       decl_score: declarationScore,
       sub_score: Math.round(subScore),
+      validation_status: "Valid - Found in resume"
     };
   });
 

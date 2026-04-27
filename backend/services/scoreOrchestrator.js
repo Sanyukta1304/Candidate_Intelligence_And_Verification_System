@@ -10,6 +10,7 @@ const ResumeScore = require("../models/ResumeScore");
 const { scoreProject } = require("./projectScorer");
 const { scoreSkills } = require("./skillsScorer");
 const { scoreResume } = require("./resumeScorer");
+const { extractSkillsFromResume } = require("./resumeSkillsExtractor");
 
 /**
  * Read resume file from uploads folder and extract text
@@ -70,11 +71,19 @@ async function orchestrate(candidateId) {
 
     // 5. Resume scoring - Read actual resume file and score it
     let resumeText = "";
+    let extractedSkills = [];
     
     if (candidate.resume_url) {
       // Read resume file from uploads folder
       resumeText = await getResumeText(candidate.resume_url);
       console.log(`[Orchestrator] Resume text extracted: ${resumeText.length} characters`);
+      
+      // ✅ Extract skills from the resume content (semantic-based)
+      extractedSkills = extractSkillsFromResume(resumeText);
+      console.log(`[Orchestrator] Extracted ${extractedSkills.length} skills from resume:`, extractedSkills);
+      
+      // Store extracted skills in candidate
+      candidate.extracted_skills = extractedSkills;
     }
     
     const resumeResult = scoreResume(resumeText || "");
@@ -86,11 +95,12 @@ async function orchestrate(candidateId) {
 
     const resumeContribution = Math.round((atsScore / 100) * 30);
 
-    // 6. Skills scoring
+    // 6. Skills scoring - Pass actual resume text and extracted skills
     const { scoredSkills, skills_score } = scoreSkills(
       candidate.skills || [],
-      candidate.resume_text || "",
-      verifiedProjects
+      resumeText || "",  // ✅ FIXED: Pass actual resume text extracted from file
+      verifiedProjects,
+      extractedSkills    // ✅ FIXED: Pass extracted skills for validation
     );
 
     // 7. Projects contribution
@@ -114,6 +124,7 @@ async function orchestrate(candidateId) {
     candidate.projects_score = Number(projectsContribution) || 0;
     candidate.total_score = Number(totalScore) || 0;
     candidate.skills = scoredSkills || [];
+    candidate.extracted_skills = extractedSkills;  // ✅ Store extracted skills
     candidate.last_scored = new Date();
 
     await candidate.save();

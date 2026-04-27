@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { candidateService } from '../../api/candidateService';
+import { useSocketNotifications } from '../../hooks/useSocketNotifications';
+import { ToastContainer } from '../../components/NotificationToast';
 
 export default function CandidateDashboardPage() {
   const navigate = useNavigate();
@@ -17,9 +19,61 @@ export default function CandidateDashboardPage() {
     verifiedProjects: 0,
   });
 
+  // Real-time socket notifications
+  const { notifications, removeNotification } = useSocketNotifications(
+    authUser?._id,
+    !!authUser
+  );
+
+  // Update activity data when a real-time notification is received
+  useEffect(() => {
+    if (notifications.length > 0) {
+      // Immediately fetch updated profile to show new stats
+      loadDashboardData();
+    }
+  }, [notifications.length]);
+
   useEffect(() => {
     loadDashboardData();
   }, []);
+
+  // Real-time profile activity polling (5-second interval)
+  useEffect(() => {
+    if (!authUser) return;
+
+    const activityInterval = setInterval(async () => {
+      try {
+        const profileResponse = await candidateService.getProfile();
+        if (profileResponse?.success) {
+          const profileData = profileResponse.data;
+          
+          // Update score card
+          setScoreCard({
+            skills: profileData.skills_score || 0,
+            resume: profileData.resume_score || 0,
+            projects: profileData.projects_score || 0,
+            total: profileData.total_score || 0,
+          });
+
+          // Count verified projects
+          const verifiedCount = (profileData.projects || []).filter(p => p.verified).length;
+          
+          // Update activity data
+          setActivity({
+            profileViews: profileData.profile_views || 0,
+            starsReceived: profileData.profile_stars || 0,
+            lastScored: profileData.last_scored ? new Date(profileData.last_scored) : null,
+            verifiedProjects: verifiedCount,
+          });
+        }
+      } catch (err) {
+        console.warn('[ActivityPolling] Failed to fetch profile activity:', err.message);
+        // Don't show error for polling failures, silently retry
+      }
+    }, 5000); // Poll every 5 seconds
+
+    return () => clearInterval(activityInterval);
+  }, [authUser]);
 
   const loadDashboardData = async () => {
     try {
@@ -45,7 +99,7 @@ export default function CandidateDashboardPage() {
         // Extract activity data
         setActivity({
           profileViews: profileData.profile_views || 0,
-          starsReceived: profileData.stars_received || 0,
+          starsReceived: profileData.profile_stars || 0,
           lastScored: profileData.last_scored ? new Date(profileData.last_scored) : null,
           verifiedProjects: verifiedCount,
         });
@@ -93,6 +147,12 @@ export default function CandidateDashboardPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
+      {/* Real-time notification toasts */}
+      <ToastContainer 
+        notifications={notifications} 
+        onDismiss={removeNotification}
+      />
+
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8">

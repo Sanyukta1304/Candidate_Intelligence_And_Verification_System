@@ -136,6 +136,13 @@ exports.getCandidateById = async (req, res) => {
       recruiter.profiles_viewed_count += 1;
       await recruiter.save();
 
+      // ✅ UPDATE CANDIDATE PROFILE VIEWS
+      await Candidate.findByIdAndUpdate(
+        candidateId,
+        { $inc: { profile_views: 1 } },
+        { new: true }
+      );
+
       // ✅ EMIT NOTIFICATION - Profile Viewed
       try {
         const recruiterUser = await User.findById(req.user.id).select('username');
@@ -261,6 +268,13 @@ exports.starCandidate = async (req, res) => {
       recruiter.starred.push(candidateId);
       recruiter.profiles_starred_count += 1;
       await recruiter.save();
+
+      // ✅ UPDATE CANDIDATE PROFILE STARS
+      await Candidate.findByIdAndUpdate(
+        candidateId,
+        { $inc: { profile_stars: 1 } },
+        { new: true }
+      );
 
       // ✅ EMIT NOTIFICATION - Profile Starred
       try {
@@ -591,6 +605,66 @@ exports.getActivity = async (req, res) => {
     res.status(500).json({
       success: false,
       message: error.message
+    });
+  }
+};
+
+// ===============================
+// 📥 10. DOWNLOAD CANDIDATE RESUME (Latest only)
+// ===============================
+exports.downloadCandidateResume = async (req, res) => {
+  try {
+    const { candidateId } = req.params;
+    const path = require('path');
+    const fs = require('fs').promises;
+
+    // Verify recruiter has access to this candidate
+    const candidate = await Candidate.findById(candidateId);
+    if (!candidate || !candidate.github_verified) {
+      return res.status(403).json({
+        success: false,
+        message: 'Candidate not found or not verified'
+      });
+    }
+
+    // ✅ Only serve the LATEST resume (single resume policy)
+    if (!candidate.resume_url) {
+      return res.status(404).json({
+        success: false,
+        message: 'No resume found for this candidate'
+      });
+    }
+
+    const resumePath = path.join(__dirname, "../uploads/resumes", candidate.resume_url);
+
+    // Check if file exists
+    try {
+      await fs.stat(resumePath);
+    } catch (err) {
+      return res.status(404).json({
+        success: false,
+        message: 'Resume file not found on server'
+      });
+    }
+
+    // Set response headers for file download
+    const fileName = `resume_${candidate.name || candidate._id}.${candidate.resume_url.split('.').pop()}`;
+    res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+    res.setHeader('Content-Type', 'application/octet-stream');
+
+    // Stream the file
+    const fileStream = require('fs').createReadStream(resumePath);
+    fileStream.pipe(res);
+
+    // Log the download
+    const recruiter = await Recruiter.findOne({ user_id: req.user.id });
+    console.log(`[Resume Download] Recruiter ${recruiter?.name} downloaded resume for ${candidate.name} (${candidateId})`);
+
+  } catch (error) {
+    console.error('[Resume Download] Error:', error.message);
+    res.status(500).json({
+      success: false,
+      message: 'Error downloading resume: ' + error.message
     });
   }
 };
