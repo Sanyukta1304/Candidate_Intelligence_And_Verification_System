@@ -618,9 +618,12 @@ exports.downloadCandidateResume = async (req, res) => {
     const path = require('path');
     const fs = require('fs').promises;
 
+    console.log(`[Resume Download] Recruiter request for candidate: ${candidateId}, recruiter user: ${req.user?.id}`);
+
     // Verify recruiter has access to this candidate
     const candidate = await Candidate.findById(candidateId);
     if (!candidate || !candidate.github_verified) {
+      console.log(`[Resume Download] Candidate not found or not verified: ${candidateId}`);
       return res.status(403).json({
         success: false,
         message: 'Candidate not found or not verified'
@@ -629,6 +632,7 @@ exports.downloadCandidateResume = async (req, res) => {
 
     // ✅ Only serve the LATEST resume (single resume policy)
     if (!candidate.resume_url) {
+      console.log(`[Resume Download] No resume_url for candidate: ${candidateId}`);
       return res.status(404).json({
         success: false,
         message: 'No resume found for this candidate'
@@ -636,11 +640,15 @@ exports.downloadCandidateResume = async (req, res) => {
     }
 
     const resumePath = path.join(__dirname, "../uploads/resumes", candidate.resume_url);
+    console.log(`[Resume Download] Resume path: ${resumePath}`);
 
-    // Check if file exists
+    // Check if file exists and get file stats
+    let fileStats;
     try {
-      await fs.stat(resumePath);
+      fileStats = await fs.stat(resumePath);
+      console.log(`[Resume Download] File found, size: ${fileStats.size} bytes`);
     } catch (err) {
+      console.error(`[Resume Download] File not found at: ${resumePath}`, err.message);
       return res.status(404).json({
         success: false,
         message: 'Resume file not found on server'
@@ -648,12 +656,49 @@ exports.downloadCandidateResume = async (req, res) => {
     }
 
     // Set response headers for file download
-    const fileName = `resume_${candidate.name || candidate._id}.${candidate.resume_url.split('.').pop()}`;
+    const fileExtension = candidate.resume_url.split('.').pop().toLowerCase();
+    const fileName = `resume_${candidate.name || candidate._id}.${fileExtension}`;
+    
+    // Set proper content type based on file extension
+    let contentType = 'application/octet-stream';
+    if (fileExtension === 'pdf') {
+      contentType = 'application/pdf';
+    } else if (fileExtension === 'docx') {
+      contentType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+    } else if (fileExtension === 'doc') {
+      contentType = 'application/msword';
+    }
+    
+    console.log(`[Resume Download] Serving file: ${fileName}, type: ${contentType}`);
+    
     res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
-    res.setHeader('Content-Type', 'application/octet-stream');
+    res.setHeader('Content-Type', contentType);
+    res.setHeader('Content-Length', fileStats.size);
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
 
-    // Stream the file
+    // Stream the file with error handling
     const fileStream = require('fs').createReadStream(resumePath);
+    
+    fileStream.on('error', (err) => {
+      console.error('[Resume Download] Stream error:', err.message);
+      if (!res.headersSent) {
+        res.status(500).json({
+          success: false,
+          message: 'Error downloading resume'
+        });
+      }
+    });
+    
+    fileStream.on('end', () => {
+      console.log(`[Resume Download] File successfully streamed to client`);
+    });
+    
+    res.on('error', (err) => {
+      console.error('[Resume Download] Response error:', err.message);
+    });
+    
     fileStream.pipe(res);
 
     // Log the download
@@ -662,9 +707,11 @@ exports.downloadCandidateResume = async (req, res) => {
 
   } catch (error) {
     console.error('[Resume Download] Error:', error.message);
-    res.status(500).json({
-      success: false,
-      message: 'Error downloading resume: ' + error.message
-    });
+    if (!res.headersSent) {
+      res.status(500).json({
+        success: false,
+        message: 'Error downloading resume: ' + error.message
+      });
+    }
   }
 };

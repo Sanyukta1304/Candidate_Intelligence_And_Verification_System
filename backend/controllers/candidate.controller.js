@@ -316,9 +316,12 @@ exports.getResumeScore = async (req, res) => {
 // ✅ DOWNLOAD RESUME (Latest only)
 exports.downloadResume = async (req, res) => {
   try {
+    console.log(`[Resume Download] Request from user: ${req.user?.id}`);
+    
     const candidate = await Candidate.findOne({ user_id: req.user.id });
 
     if (!candidate) {
+      console.log(`[Resume Download] Candidate not found for user: ${req.user?.id}`);
       return res.status(404).json({
         success: false,
         message: 'Candidate profile not found'
@@ -327,6 +330,7 @@ exports.downloadResume = async (req, res) => {
 
     // ✅ Only serve the latest resume
     if (!candidate.resume_url) {
+      console.log(`[Resume Download] No resume_url found for candidate: ${candidate._id}`);
       return res.status(404).json({
         success: false,
         message: 'No resume found. Please upload a resume first.'
@@ -334,11 +338,15 @@ exports.downloadResume = async (req, res) => {
     }
 
     const resumePath = path.join(__dirname, "../uploads/resumes", candidate.resume_url);
+    console.log(`[Resume Download] Resume path: ${resumePath}`);
 
-    // Check if file exists
+    // Check if file exists and get file stats
+    let fileStats;
     try {
-      await fs.stat(resumePath);
+      fileStats = await fs.stat(resumePath);
+      console.log(`[Resume Download] File found, size: ${fileStats.size} bytes`);
     } catch (err) {
+      console.error(`[Resume Download] File not found at: ${resumePath}`, err.message);
       return res.status(404).json({
         success: false,
         message: 'Resume file not found on server'
@@ -346,21 +354,57 @@ exports.downloadResume = async (req, res) => {
     }
 
     // Set response headers for file download
-    const fileName = `resume_${candidate._id}.${candidate.resume_url.split('.').pop()}`;
+    const fileExtension = candidate.resume_url.split('.').pop().toLowerCase();
+    const fileName = `resume_${candidate._id}.${fileExtension}`;
+    
+    // Set proper content type based on file extension
+    let contentType = 'application/octet-stream';
+    if (fileExtension === 'pdf') {
+      contentType = 'application/pdf';
+    } else if (fileExtension === 'docx') {
+      contentType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+    } else if (fileExtension === 'doc') {
+      contentType = 'application/msword';
+    }
+    
+    console.log(`[Resume Download] Serving file: ${fileName}, type: ${contentType}`);
+    
     res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
-    res.setHeader('Content-Type', 'application/octet-stream');
+    res.setHeader('Content-Type', contentType);
+    res.setHeader('Content-Length', fileStats.size);
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
 
-    // Stream the file
+    // Stream the file with error handling
     const stream = require('fs').createReadStream(resumePath);
+    
+    stream.on('error', (err) => {
+      console.error('[Resume Download] Stream error:', err.message);
+      if (!res.headersSent) {
+        res.status(500).json({
+          success: false,
+          message: 'Error downloading resume'
+        });
+      }
+    });
+    
+    stream.on('end', () => {
+      console.log(`[Resume Download] File successfully streamed to client`);
+    });
+    
+    res.on('error', (err) => {
+      console.error('[Resume Download] Response error:', err.message);
+    });
+    
     stream.pipe(res);
-
-    // Log the download
-    console.log(`[Resume Download] Candidate ${candidate._id} downloaded resume: ${candidate.resume_url}`);
   } catch (error) {
     console.error('[Resume Download] Error:', error.message);
-    res.status(500).json({
-      success: false,
-      message: 'Error downloading resume: ' + error.message
-    });
+    if (!res.headersSent) {
+      res.status(500).json({
+        success: false,
+        message: 'Error downloading resume: ' + error.message
+      });
+    }
   }
 };

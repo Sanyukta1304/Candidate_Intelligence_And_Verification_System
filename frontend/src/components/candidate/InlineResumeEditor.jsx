@@ -73,6 +73,44 @@ export const InlineResumeEditor = ({
     }
   };
 
+  const handleDownloadResume = async () => {
+    if (!resumeUrl) return;
+    
+    try {
+      // Import axios instance with authentication
+      const { default: axiosInstance } = await import('../../api/axios');
+      
+      // Fetch file as blob with proper auth headers
+      const response = await axiosInstance.get(
+        '/api/candidate/resume-download',
+        { responseType: 'blob' }
+      );
+      
+      // Extract filename from content-disposition header if available
+      const contentDisposition = response.headers['content-disposition'];
+      let fileName = `resume_${profileId}.pdf`;
+      if (contentDisposition) {
+        const match = contentDisposition.match(/filename="(.+)"/);  
+        if (match) fileName = match[1];
+      }
+      
+      // Create blob URL and trigger download
+      const blobUrl = window.URL.createObjectURL(response.data);
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      // Clean up blob URL
+      setTimeout(() => window.URL.revokeObjectURL(blobUrl), 100);
+    } catch (error) {
+      console.error('Download failed:', error);
+      alert('Failed to download resume. Please try again.');
+    }
+  };
+
   if (!isEditing) {
     return (
       <div className="bg-white rounded-xl border border-slate-200 shadow-soft-lg p-8">
@@ -102,10 +140,8 @@ export const InlineResumeEditor = ({
                 </div>
               </div>
               <a
-                href={resumeUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-block mt-3 px-4 py-2 bg-primary-dark text-white rounded-lg hover:bg-slate-800 text-sm"
+                onClick={handleDownloadResume}
+                className="inline-block mt-3 px-4 py-2 bg-primary-dark text-white rounded-lg hover:bg-slate-800 text-sm cursor-pointer"
               >
                 Download Resume
               </a>

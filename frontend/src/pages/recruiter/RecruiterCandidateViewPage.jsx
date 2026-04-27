@@ -62,15 +62,41 @@ const RecruiterCandidateViewPage = () => {
     }
   };
 
-  const handleDownloadResume = () => {
-    if (candidate?.resume_url) {
-      // Download resume from backend
+  const handleDownloadResume = async () => {
+    if (!candidate?.resume_url) return;
+    
+    try {
+      // Import axios instance with authentication
+      const { default: axiosInstance } = await import('../../api/axios');
+      
+      // Fetch file as blob with proper auth headers
+      const response = await axiosInstance.get(
+        `/api/recruiter/candidates/${candidateId}/resume/download`,
+        { responseType: 'blob' }
+      );
+      
+      // Extract filename from content-disposition header if available
+      const contentDisposition = response.headers['content-disposition'];
+      let fileName = `${candidate?.name}_resume.pdf`;
+      if (contentDisposition) {
+        const match = contentDisposition.match(/filename="(.+)"/);  
+        if (match) fileName = match[1];
+      }
+      
+      // Create blob URL and trigger download
+      const blobUrl = window.URL.createObjectURL(response.data);
       const link = document.createElement('a');
-      link.href = `/api/candidate/resume/download/${candidateId}`;
-      link.download = `${candidate?.name}_resume.pdf`;
+      link.href = blobUrl;
+      link.download = fileName;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
+      
+      // Clean up blob URL
+      setTimeout(() => window.URL.revokeObjectURL(blobUrl), 100);
+    } catch (error) {
+      console.error('Download failed:', error);
+      alert('Failed to download resume. Please try again.');
     }
   };
 

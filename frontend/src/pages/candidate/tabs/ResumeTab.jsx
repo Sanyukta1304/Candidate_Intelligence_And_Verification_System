@@ -199,7 +199,7 @@ export default function ResumeTab({ candidate }) {
     setUploading(true);
     setUploadMsg("Uploading & scoring...");
     try {
-      const { default: axios } = await import("../../../api/axiosInstance");
+      const { default: axios } = await import("../../../../api/axios");
       await axios.post("/api/candidate/resume", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
@@ -213,6 +213,45 @@ export default function ResumeTab({ candidate }) {
       setUploadMsg("Upload failed. Please try again.");
     } finally {
       setUploading(false);
+    }
+  };
+
+  // Handle resume download
+  const handleDownloadResume = async () => {
+    if (!candidate?.resume_url) return;
+    
+    try {
+      // Import axios instance with authentication
+      const { default: axios } = await import('../../../../api/axios');
+      
+      // Fetch file as blob with proper auth headers
+      const response = await axios.get(
+        '/api/candidate/resume-download',
+        { responseType: 'blob' }
+      );
+      
+      // Extract filename from content-disposition header if available
+      const contentDisposition = response.headers['content-disposition'];
+      let fileName = `resume_${candidate?._id}.pdf`;
+      if (contentDisposition) {
+        const match = contentDisposition.match(/filename="(.+)"/);  
+        if (match) fileName = match[1];
+      }
+      
+      // Create blob URL and trigger download
+      const blobUrl = window.URL.createObjectURL(response.data);
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      // Clean up blob URL
+      setTimeout(() => window.URL.revokeObjectURL(blobUrl), 100);
+    } catch (error) {
+      console.error('Download failed:', error);
+      alert('Failed to download resume. Please try again.');
     }
   };
 
@@ -490,13 +529,12 @@ export default function ResumeTab({ candidate }) {
             <div style={{ color: C.slate, fontSize: 12 }}>PDF on file</div>
           </div>
           <a
-            href={candidate.resume_url}
-            target="_blank"
-            rel="noopener noreferrer"
+            onClick={handleDownloadResume}
             style={{
               background: "transparent", border: `1.5px solid ${C.teal}`,
               color: C.teal, borderRadius: 6, padding: "7px 16px",
               fontSize: 13, fontWeight: 600, textDecoration: "none",
+              cursor: "pointer",
             }}
           >
             ↓ Download PDF

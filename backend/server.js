@@ -85,6 +85,8 @@ app.use(
     origin: process.env.CLIENT_URL || 'http://localhost:3000',
     credentials: true,
     optionsSuccessStatus: 200,
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   })
 );
 

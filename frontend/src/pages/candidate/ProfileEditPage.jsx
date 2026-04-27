@@ -289,7 +289,7 @@ export default function ProfileEditPage({ candidate, onSaved }) {
     setUploading(true);
     setUploadMsg("Uploading & scoring…");
     try {
-      const { default: axios } = await import("../../api/axiosInstance");
+      const { default: axios } = await import("../../api/axios");
       await axios.post("/api/candidate/resume", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
