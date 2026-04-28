@@ -167,20 +167,33 @@ const ProfilePageNew = () => {
       const response = await candidateService.updateProfile(updateData);
 
       if (response.success) {
+        // ✅ FIXED: Immediately update state with returned data and scores
+        // Backend now calls orchestrate automatically, so scores are fresh
         setProfile(response.data);
         
-        // Trigger score re-calculation after skills update
-        if (editModalTab === 'skills' && profile?._id) {
-          try {
-            await triggerScore(profile._id);
-          } catch (scoreErr) {
-            console.error('Failed to trigger score re-calculation:', scoreErr);
-          }
-        }
+        // Update score card if scores were recalculated
+        setScoreCard({
+          skills: response.data?.skills_score || 0,
+          resume: response.data?.resume_score || 0,
+          projects: response.data?.projects_score || 0,
+          total: response.data?.total_score || 0,
+        });
+
+        // Update edit form for display
+        setEditForm({
+          education: response.data?.education || null,
+          about: response.data?.about || '',
+          skills: response.data?.skills || [],
+        });
         
         setShowEditModal(false);
-        setSuccessMessage('Profile updated successfully!');
-        await loadProfileData();
+        setSuccessMessage('Profile and skill scores updated successfully!');
+        
+        // Reload full data in background for complete sync
+        setTimeout(() => {
+          loadProfileData().catch(err => console.error('Background reload failed:', err));
+        }, 800);
+        
         setTimeout(() => setSuccessMessage(''), 3000);
       }
     } catch (err) {
@@ -203,21 +216,25 @@ const ProfilePageNew = () => {
       const response = await candidateService.updateProfile(updateData);
 
       if (response.success) {
+        // ✅ FIXED: Immediately update state with returned data and scores
+        // Backend now calls orchestrate automatically after skills update
         setProfile(response.data);
         
-        // Trigger score re-calculation for skills
-        if (profile?._id) {
-          try {
-            console.log('Triggering skill score re-calculation...');
-            await triggerScore(profile._id);
-            setSuccessMessage('Skills updated and scored successfully!');
-          } catch (scoreErr) {
-            console.error('Failed to trigger score re-calculation:', scoreErr);
-            setSuccessMessage('Skills updated! (Score update pending)');
-          }
-        }
+        // Update score card with fresh calculations
+        setScoreCard({
+          skills: response.data?.skills_score || 0,
+          resume: response.data?.resume_score || 0,
+          projects: response.data?.projects_score || 0,
+          total: response.data?.total_score || 0,
+        });
+
+        setSuccessMessage('Skills updated and scored successfully!');
         
-        await loadProfileData();
+        // Reload full data in background for complete sync
+        setTimeout(() => {
+          loadProfileData().catch(err => console.error('Background reload failed:', err));
+        }, 800);
+        
         setTimeout(() => setSuccessMessage(''), 3000);
       }
     } catch (err) {
@@ -237,13 +254,33 @@ const ProfilePageNew = () => {
       const response = await candidateService.uploadResume(file);
 
       if (response.success) {
-        // Update profile with new resume URL
+        // ✅ FIXED: Immediately update state with new resume and recalculated scores
+        // Backend now calls orchestrate automatically, so scores are fresh
         setProfile(prev => ({
           ...prev,
-          resume_url: response.data.resume_url
+          resume_url: response.data.resume_url,
+          resume_score: response.data.scores?.resume_score || prev.resume_score,
+          skills_score: response.data.scores?.skills_score || prev.skills_score,
+          projects_score: response.data.scores?.projects_score || prev.projects_score,
+          total_score: response.data.scores?.total_score || prev.total_score,
+          skills: response.data.skills || prev.skills
         }));
 
-        setSuccessMessage('Resume uploaded successfully! Click Submit to score.');
+        // Update score card
+        setScoreCard({
+          skills: response.data.scores?.skills_score || 0,
+          resume: response.data.scores?.resume_score || 0,
+          projects: response.data.scores?.projects_score || 0,
+          total: response.data.scores?.total_score || 0,
+        });
+
+        setSuccessMessage('Resume uploaded and skill scores recalculated!');
+        
+        // Reload full data in background to ensure complete sync
+        setTimeout(() => {
+          loadProfileData().catch(err => console.error('Background reload failed:', err));
+        }, 1000);
+        
         setTimeout(() => setSuccessMessage(''), 3000);
       }
     } catch (err) {

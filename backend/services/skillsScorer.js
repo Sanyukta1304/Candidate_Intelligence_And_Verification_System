@@ -7,22 +7,15 @@ function scoreSkills(skills = [], resumeText = "", verifiedProjects = [], extrac
   const scoredSkills = skills.map((skillObj) => {
     const skillName = (skillObj.name || "").toLowerCase().trim();
 
-    // ✅ VALIDATION: Check if skill exists in extracted skills from resume
-    const skillFoundInResume = lowerExtractedSkills.includes(skillName);
+    // ✅ FIXED: Changed logic to apply formula even if skill not in resume
+    // Formula applies: (Project Usage × 0.5) + (Resume Mention × 0.3) + (Skill Declaration × 0.2)
+    // Even if resume mention is 0, project usage + skill declaration still contribute
 
-    if (!skillFoundInResume) {
-      // Skill not found in uploaded resume - score as 0
-      return {
-        ...skillObj.toObject?.() ?? skillObj,
-        project_score: 0,
-        resume_score: 0,
-        decl_score: 0,
-        sub_score: 0,
-        validation_status: "Skill not found in uploaded resume"
-      };
-    }
+    // 1. SKILL DECLARATION (20%) - Candidate explicitly listed this skill
+    // This is always 100 since they added it to their profile
+    const declarationScore = 100;
 
-    // Count how many verified projects use this skill
+    // 2. PROJECT USAGE (50%) - Count verified projects using this skill
     const matchingProjects = verifiedProjects.filter((project) => {
       const techStack = (project.tech_stack || []).map((tech) =>
         tech.toLowerCase().trim()
@@ -41,27 +34,25 @@ function scoreSkills(skills = [], resumeText = "", verifiedProjects = [], extrac
       projectUsageScore = 70;
     }
 
-    // ✅ FIXED: Resume declaration score using semantic extraction
-    // Using the new resumeSkillsExtractor function for proper context-based detection
+    // 3. RESUME MENTION (30%) - Check if skill is mentioned in resume content
+    // ✅ FIXED: Use semantic extraction, not just presence check
+    // Even if skill isn't in extractedSkills, scoreResumeDeclaration can still find it
     const resumeDeclarationScore = scoreResumeDeclaration(skillName, resumeText);
 
-    // declaration score out of 100
-    const declarationScore = 100;
-
-    // Final sub score using proper weighting
-    // Skill Score = (Project Usage × 0.5) + (Resume Declaration × 0.3) + (Skill Declaration × 0.2)
+    // ✅ Final Skill Score using formula: 50% project + 30% resume + 20% declaration
     const subScore =
       projectUsageScore * 0.5 +
       resumeDeclarationScore * 0.3 +
       declarationScore * 0.2;
 
+    // ✅ FIXED: No validation blocking - always calculate score
     return {
       ...skillObj.toObject?.() ?? skillObj,
       project_score: projectUsageScore,
       resume_score: resumeDeclarationScore,
       decl_score: declarationScore,
       sub_score: Math.round(subScore),
-      validation_status: "Valid - Found in resume"
+      validation_status: "Valid - Scored using full formula"
     };
   });
 

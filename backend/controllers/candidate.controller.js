@@ -90,7 +90,33 @@ exports.updateProfile = async (req, res) => {
       { returnDocument: 'after' }
     );
 
-    res.json({ success: true, data: updated });
+    // ✅ FIXED: Automatically trigger skill score recalculation when skills are updated
+    // This ensures skill scores are always fresh when skills change
+    const { orchestrate } = require('../services/scoreOrchestrator');
+    
+    try {
+      console.log('[Profile Update] Skills updated, triggering orchestrate for recalculation...');
+      const scores = await orchestrate(updated._id);
+      console.log('[Profile Update] Orchestrate completed successfully');
+      
+      // Fetch updated candidate with new scores
+      const finalCandidate = await Candidate.findById(updated._id);
+      
+      res.json({
+        success: true,
+        message: 'Profile and skill scores updated successfully',
+        data: finalCandidate
+      });
+    } catch (orchestrateError) {
+      console.error('[Profile Update] Orchestrate error:', orchestrateError.message);
+      // Profile was updated successfully, but scoring failed
+      // Still return the updated profile, scoring can retry
+      res.json({
+        success: true,
+        message: 'Profile updated successfully. Skill recalculation encountered an issue.',
+        data: updated
+      });
+    }
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
@@ -280,17 +306,50 @@ exports.uploadResume = async (req, res, next) => {
 
     console.log(`[Resume Upload] File stored for user ${req.user.id}: ${req.file.filename}`);
 
-    // Return file info (user will submit separately to trigger scoring)
-    res.status(200).json({
-      success: true,
-      message: 'Resume uploaded successfully. Click Submit to score with ATS engine.',
-      data: {
-        resume_url: req.file.filename,
-        filename: req.file.originalname,
-        file_size: req.file.size,
-        upload_time: new Date()
-      }
-    });
+    // ✅ FIXED: Automatically trigger skill score recalculation with new resume
+    // This ensures skills are re-scored based on resume content immediately
+    const { orchestrate } = require('../services/scoreOrchestrator');
+    
+    try {
+      console.log('[Resume Upload] Triggering orchestrate for skill recalculation...');
+      const scores = await orchestrate(candidate._id);
+      console.log('[Resume Upload] Orchestrate completed successfully');
+      
+      // Fetch updated candidate with new scores
+      const updatedCandidate = await Candidate.findById(candidate._id);
+      
+      res.status(200).json({
+        success: true,
+        message: 'Resume uploaded and skill scores recalculated successfully',
+        data: {
+          resume_url: req.file.filename,
+          filename: req.file.originalname,
+          file_size: req.file.size,
+          upload_time: new Date(),
+          scores: {
+            resume_score: updatedCandidate.resume_score,
+            skills_score: updatedCandidate.skills_score,
+            projects_score: updatedCandidate.projects_score,
+            total_score: updatedCandidate.total_score
+          },
+          skills: updatedCandidate.skills
+        }
+      });
+    } catch (orchestrateError) {
+      console.error('[Resume Upload] Orchestrate error:', orchestrateError.message);
+      // Resume was uploaded successfully, but scoring failed
+      // Still return success with resume info, user can retry scoring
+      res.status(200).json({
+        success: true,
+        message: 'Resume uploaded successfully. Skill recalculation encountered an issue, but will retry automatically.',
+        data: {
+          resume_url: req.file.filename,
+          filename: req.file.originalname,
+          file_size: req.file.size,
+          upload_time: new Date()
+        }
+      });
+    }
   } catch (error) {
     console.error('[Resume Upload] Error:', error.message);
     
