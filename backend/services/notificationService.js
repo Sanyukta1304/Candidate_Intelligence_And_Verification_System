@@ -24,8 +24,12 @@ const emitNotification = async ({
       company_name,
     });
 
+    // Emit real-time notification to the recipient's socket.io room
+    // recipient_id must be converted to string for socket.io room joining
     if (ioInstance) {
-      ioInstance.to(recipient_id.toString()).emit("notification", notification);
+      const recipientRoom = recipient_id.toString();
+      ioInstance.to(recipientRoom).emit("notification", notification);
+      console.log(`📤 Notification emitted to room: ${recipientRoom}`);
     }
 
     return notification;

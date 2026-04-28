@@ -16,4 +16,7 @@ router.get('/resume-download', verifyToken, controller.downloadResume);
 
 router.get('/resume-score', verifyToken, controller.getResumeScore);
 
+// ✅ Note: Projects are fetched via /api/projects from project.routes.js
+// This gives candidates immediate access to their own projects
+
 module.exports = router;

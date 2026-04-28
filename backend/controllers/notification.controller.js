@@ -25,6 +25,8 @@ const getNotifications = async (req, res) => {
         message = `${notif.recruiter_name || 'A recruiter'} from ${notif.company_name || 'Unknown Company'} viewed your profile`;
       } else if (notif.type === 'profile_starred') {
         message = `${notif.recruiter_name || 'A recruiter'} from ${notif.company_name || 'Unknown Company'} starred your profile`;
+      } else if (notif.type === 'shortlisted') {
+        message = `${notif.recruiter_name || 'A recruiter'} from ${notif.company_name || 'Unknown Company'} shortlisted your profile`;
       }
 
       return {

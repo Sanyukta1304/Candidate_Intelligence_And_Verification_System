@@ -10,7 +10,8 @@ const {
 const { verifyToken } = require("../middleware/auth");
 
 router.get("/notifications", verifyToken, getNotifications);
-router.put("/notifications/:id/read", verifyToken, markNotificationRead);
+// ✅ IMPORTANT: read-all must come BEFORE :id to prevent parameter matching issues
 router.put("/notifications/read-all", verifyToken, markAllNotificationsRead);
+router.put("/notifications/:id/read", verifyToken, markNotificationRead);
 
 module.exports = router;

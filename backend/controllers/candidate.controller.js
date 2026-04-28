@@ -17,7 +17,27 @@ exports.getProfile = async (req, res) => {
       });
     }
 
-    res.json({ success: true, data: candidate });
+    // ✅ FETCH PROJECTS for this candidate
+    const Project = require('../models/Project');
+    const projects = await Project.find({ candidate_id: candidate._id }).sort({ createdAt: -1 });
+
+    // Transform candidate to include projects
+    const candidateObj = candidate.toObject ? candidate.toObject() : candidate;
+    const responseData = {
+      ...candidateObj,
+      projects: projects.map(p => ({
+        _id: p._id,
+        title: p.title,
+        description: p.description,
+        github_link: p.github_link,
+        tech_stack: p.tech_stack || [],
+        project_score: p.project_score || 0,
+        verified: p.verified,
+        score_breakdown: p.score_breakdown || {}
+      }))
+    };
+
+    res.json({ success: true, data: responseData });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }

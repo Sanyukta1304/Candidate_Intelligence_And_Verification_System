@@ -4,6 +4,8 @@
  * Looks for skills in: summary, experience, internship, certifications, technical profile, etc.
  */
 
+const { createSafeWordBoundaryRegex } = require('../utils/regexEscape');
+
 const commonSkills = [
   // Programming Languages
   'python', 'javascript', 'java', 'c++', 'c#', 'php', 'ruby', 'go', 'rust', 'kotlin',
@@ -55,7 +57,8 @@ function extractSkillsFromResume(resumeText = "") {
   for (const skill of commonSkills) {
     // Use word boundary to avoid partial matches
     // e.g., "python" should not match "pythonic"
-    const skillRegex = new RegExp(`\\b${skill}\\b`, 'gi');
+    // ✅ FIXED: Use safe regex that escapes special characters in skill names (C++, C#, Node.js, etc)
+    const skillRegex = createSafeWordBoundaryRegex(skill, 'gi');
     
     if (skillRegex.test(lowerResumeText)) {
       // Check context to ensure it's meaningful (not just in a URL or random text)
@@ -123,7 +126,8 @@ function scoreResumeDeclaration(skillName, resumeText = "") {
   const lowerSkill = skillName.toLowerCase();
 
   // Check if skill exists in resume at all
-  const skillRegex = new RegExp(`\\b${lowerSkill}\\b`, 'gi');
+  // ✅ FIXED: Use safe regex that escapes special characters in skill names (C++, C#, Node.js, etc)
+  const skillRegex = createSafeWordBoundaryRegex(lowerSkill, 'gi');
   if (!skillRegex.test(lowerResumeText)) {
     return 0; // Skill not found in resume
   }

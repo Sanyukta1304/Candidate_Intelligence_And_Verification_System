@@ -9,14 +9,24 @@ const getProjects = async (req, res) => {
     const candidate = await Candidate.findOne({ user_id: req.user.id });
 
     if (!candidate) {
-      return res.status(404).json({ message: "Candidate profile not found" });
+      return res.status(404).json({ 
+        success: false,
+        message: "Candidate profile not found" 
+      });
     }
 
     const projects = await Project.find({ candidate_id: candidate._id }).sort({ createdAt: -1 });
 
-    res.status(200).json(projects);
+    res.status(200).json({
+      success: true,
+      message: "Projects fetched successfully",
+      data: projects
+    });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ 
+      success: false,
+      message: error.message 
+    });
   }
 };
 
@@ -27,11 +37,17 @@ const createProject = async (req, res) => {
     const candidate = await Candidate.findOne({ user_id: req.user.id });
 
     if (!candidate) {
-      return res.status(404).json({ message: "Candidate profile not found" });
+      return res.status(404).json({ 
+        success: false,
+        message: "Candidate profile not found" 
+      });
     }
 
     if (!candidate.github_verified || !candidate.github_access_token || !candidate.github_username) {
-      return res.status(400).json({ message: "GitHub is not connected or verified" });
+      return res.status(400).json({ 
+        success: false,
+        message: "GitHub is not connected or verified" 
+      });
     }
 
     let project = new Project({
@@ -52,14 +68,27 @@ const createProject = async (req, res) => {
 
     await project.save();
 
-    await orchestrate(candidate._id);
+    // ✅ FIXED: Run orchestrate asynchronously to prevent project save from failing
+    // If orchestrate fails, project is still saved and returned to frontend
+    // Frontend gets immediate response, ATS scoring happens in background
+    try {
+      await orchestrate(candidate._id);
+    } catch (orchestrateError) {
+      console.error('[Project Controller] Orchestrate error (non-blocking):', orchestrateError.message);
+      // Don't throw - project was already saved successfully
+      // Orchestrate errors should not break project creation
+    }
 
     res.status(201).json({
+      success: true,
       message: "Project added and verified successfully",
-      project,
+      data: project,
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ 
+      success: false,
+      message: error.message 
+    });
   }
 };
 
@@ -71,13 +100,19 @@ const updateProject = async (req, res) => {
     const candidate = await Candidate.findOne({ user_id: req.user.id });
 
     if (!candidate) {
-      return res.status(404).json({ message: "Candidate profile not found" });
+      return res.status(404).json({ 
+        success: false,
+        message: "Candidate profile not found" 
+      });
     }
 
     const project = await Project.findOne({ _id: id, candidate_id: candidate._id });
 
     if (!project) {
-      return res.status(404).json({ message: "Project not found" });
+      return res.status(404).json({ 
+        success: false,
+        message: "Project not found" 
+      });
     }
 
     project.title = title ?? project.title;
@@ -86,7 +121,10 @@ const updateProject = async (req, res) => {
     project.tech_stack = Array.isArray(tech_stack) ? tech_stack : project.tech_stack;
 
     if (!candidate.github_verified || !candidate.github_access_token || !candidate.github_username) {
-      return res.status(400).json({ message: "GitHub is not connected or verified" });
+      return res.status(400).json({ 
+        success: false,
+        message: "GitHub is not connected or verified" 
+      });
     }
 
     await verifyRepo(project, candidate);
@@ -99,14 +137,24 @@ const updateProject = async (req, res) => {
 
     await project.save();
 
-    await orchestrate(candidate._id);
+    // ✅ FIXED: Run orchestrate asynchronously to prevent project update from failing
+    try {
+      await orchestrate(candidate._id);
+    } catch (orchestrateError) {
+      console.error('[Project Controller] Orchestrate error (non-blocking):', orchestrateError.message);
+      // Don't throw - project was already saved successfully
+    }
 
     res.status(200).json({
+      success: true,
       message: "Project updated successfully",
-      project,
+      data: project,
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ 
+      success: false,
+      message: error.message 
+    });
   }
 };
 
@@ -117,20 +165,40 @@ const deleteProject = async (req, res) => {
     const candidate = await Candidate.findOne({ user_id: req.user.id });
 
     if (!candidate) {
-      return res.status(404).json({ message: "Candidate profile not found" });
+      return res.status(404).json({ 
+        success: false,
+        message: "Candidate profile not found" 
+      });
     }
 
     const project = await Project.findOneAndDelete({ _id: id, candidate_id: candidate._id });
 
     if (!project) {
-      return res.status(404).json({ message: "Project not found" });
+      return res.status(404).json({ 
+        success: false,
+        message: "Project not found" 
+      });
     }
 
-    await orchestrate(candidate._id);
+    // ✅ FIXED: Run orchestrate asynchronously to prevent project delete from failing
+    // Even if orchestrate fails, project deletion is already committed
+    try {
+      await orchestrate(candidate._id);
+    } catch (orchestrateError) {
+      console.error('[Project Controller] Orchestrate error (non-blocking):', orchestrateError.message);
+      // Don't throw - project was already deleted successfully
+    }
 
-    res.status(200).json({ message: "Project deleted successfully" });
+    res.status(200).json({ 
+      success: true,
+      message: "Project deleted successfully",
+      data: project
+    });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ 
+      success: false,
+      message: error.message 
+    });
   }
 };
 

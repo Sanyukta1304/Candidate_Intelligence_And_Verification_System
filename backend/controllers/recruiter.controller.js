@@ -146,13 +146,16 @@ exports.getCandidateById = async (req, res) => {
       // ✅ EMIT NOTIFICATION - Profile Viewed
       try {
         const recruiterUser = await User.findById(req.user.id).select('username');
-        await emitNotification({
-          recipient_id: candidateId,
-          type: 'profile_viewed',
-          recruiter_id: recruiter._id,
-          recruiter_name: recruiterUser?.username || 'A recruiter',
-          company_name: recruiter.company_name || 'Unknown Company'
-        });
+        const candidate = await Candidate.findById(candidateId).select('user_id');
+        if (candidate && candidate.user_id) {
+          await emitNotification({
+            recipient_id: candidate.user_id, // ✅ FIXED: Use user_id, not candidate_id
+            type: 'profile_viewed',
+            recruiter_id: recruiter._id,
+            recruiter_name: recruiterUser?.username || 'A recruiter',
+            company_name: recruiter.company_name || 'Unknown Company'
+          });
+        }
       } catch (notifError) {
         console.warn('[getCandidateById] Notification failed:', notifError.message);
         // Don't fail the endpoint if notification fails
@@ -279,8 +282,9 @@ exports.starCandidate = async (req, res) => {
       // ✅ EMIT NOTIFICATION - Profile Starred
       try {
         const recruiterUser = await User.findById(req.user.id).select('username');
+        // ✅ FIXED: Use candidate.user_id, not candidateId
         await emitNotification({
-          recipient_id: candidateId,
+          recipient_id: candidate.user_id, 
           type: 'profile_starred',
           recruiter_id: recruiter._id,
           recruiter_name: recruiterUser?.username || 'A recruiter',

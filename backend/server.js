@@ -182,17 +182,18 @@ const socketIO = require('socket.io');
 
 
 // ✅ Initialize notification service with Socket.io instance
-
 setSocketInstance(io);
 
-// Socket.io connection handler
+// Socket.io connection handler - Unified for notifications
 io.on('connection', (socket) => {
   console.log(`🔌 Client connected: ${socket.id}`);
   
-  // Join user room for targeted notifications
-  socket.on('join-user', (userId) => {
-    socket.join(userId);
-    console.log(`👤 User ${userId} joined room: ${socket.id}`);
+  // Listen for join event - frontend uses 'join' to enter user notification room
+  socket.on('join', (userId) => {
+    if (userId) {
+      socket.join(userId.toString());
+      console.log(`👤 User ${userId} joined notification room`);
+    }
   });
   
   socket.on('disconnect', () => {

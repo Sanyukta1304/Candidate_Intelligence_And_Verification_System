@@ -48,31 +48,31 @@ export const candidateService = {
     }
   },
 
-  // GET /api/candidate/projects
+  // GET /api/projects - Get all projects for candidate
   getProjects: async () => {
     try {
-      const response = await axiosInstance.get('/api/candidate/projects');
+      const response = await axiosInstance.get('/api/projects');
       return response.data;
     } catch (error) {
       throw error.response?.data || error;
     }
   },
 
-  // POST /api/candidate/projects
+  // POST /api/projects - Create new project
   createProject: async (projectData) => {
     try {
-      const response = await axiosInstance.post('/api/candidate/projects', projectData);
+      const response = await axiosInstance.post('/api/projects', projectData);
       return response.data;
     } catch (error) {
       throw error.response?.data || error;
     }
   },
 
-  // PUT /api/candidate/projects/:id
+  // PUT /api/projects/:id - Update project
   updateProject: async (projectId, projectData) => {
     try {
       const response = await axiosInstance.put(
-        `/api/candidate/projects/${projectId}`,
+        `/api/projects/${projectId}`,
         projectData
       );
       return response.data;
@@ -81,10 +81,10 @@ export const candidateService = {
     }
   },
 
-  // DELETE /api/candidate/projects/:id
+  // DELETE /api/projects/:id - Delete project
   deleteProject: async (projectId) => {
     try {
-      const response = await axiosInstance.delete(`/api/candidate/projects/${projectId}`);
+      const response = await axiosInstance.delete(`/api/projects/${projectId}`);
       return response.data;
     } catch (error) {
       throw error.response?.data || error;

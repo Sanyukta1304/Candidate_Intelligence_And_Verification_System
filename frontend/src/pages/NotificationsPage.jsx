@@ -1,12 +1,39 @@
 import React, { useState, useEffect } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import { candidateService } from "../api/candidateService";
+import { useSocketNotifications } from "../hooks/useSocketNotifications";
 
 const NotificationsPage = () => {
   const { isAuthenticated, user } = useAuth();
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  
+  // Real-time socket notifications
+  const { notifications: socketNotifications } = useSocketNotifications(
+    user?._id,
+    !!user
+  );
+
+  // Merge socket notifications with existing ones (avoid duplicates)
+  useEffect(() => {
+    if (socketNotifications.length > 0) {
+      setNotifications(prev => {
+        const merged = [...socketNotifications];
+        const existingIds = new Set(merged.map(n => n._id));
+        
+        // Add existing notifications that aren't already in socket notifications
+        for (const notif of prev) {
+          if (!existingIds.has(notif._id)) {
+            merged.push(notif);
+          }
+        }
+        
+        // Sort by createdAt descending
+        return merged.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      });
+    }
+  }, [socketNotifications]);
 
   // Initial load of notifications
   useEffect(() => {
@@ -23,7 +50,7 @@ const NotificationsPage = () => {
       try {
         const notificationData = await candidateService.getNotifications();
         const newNotifications = notificationData?.data || (Array.isArray(notificationData) ? notificationData : []);
-        setNotifications(newNotifications);
+        setNotifications(newNotifications.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)));
       } catch (err) {
         console.warn('[NotificationPolling] Failed to fetch notifications:', err.message);
         // Don't show error for polling failures, silently retry
@@ -39,7 +66,7 @@ const NotificationsPage = () => {
       setError(null);
       const notificationData = await candidateService.getNotifications();
       const newNotifications = notificationData?.data || (Array.isArray(notificationData) ? notificationData : []);
-      setNotifications(newNotifications);
+      setNotifications(newNotifications.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)));
     } catch (err) {
       console.error('Failed to load notifications:', err);
       setError('Failed to load notifications. Please try again.');
@@ -155,7 +182,7 @@ const NotificationsPage = () => {
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <p className={`${notification.read ? 'text-slate-700' : 'text-slate-900 font-semibold'}`}>
-                      {notification.message || `${notification.recruiter_name || 'Someone'} ${notification.action === 'viewed' ? 'viewed' : 'starred'} your profile`}
+                      {notification.message}
                     </p>
                     <p className="text-sm text-slate-500 mt-2">
                       {formatTimeAgo(notification.createdAt)}

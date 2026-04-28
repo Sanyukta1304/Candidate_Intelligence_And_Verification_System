@@ -253,16 +253,22 @@ export default function AddProjectModal({ project: editProject, candidateId, onC
       setVerifyResult(result);
       setVerifyStatus(result.verified ? "success" : "error");
 
-      // Trigger full score re-orchestration
-      if (candidateId) await triggerScore(candidateId).catch(() => {});
+      // ✅ FIXED: Don't wait for triggerScore - fire and forget
+      // This allows immediate modal close and UI update
+      if (candidateId) {
+        triggerScore(candidateId).catch((err) => {
+          console.error('[AddProjectModal] Score trigger failed (non-blocking):', err);
+          // Non-blocking - project already saved and shown in UI
+        });
+      }
 
-      // Short pause so user sees the result, then close
-      setTimeout(() => onSaved(result), 2000);
+      // Immediately notify parent and close modal (don't wait for score)
+      // Use small delay to show the success result visually
+      setTimeout(() => onSaved(result), 1200);
     } catch (err) {
       const msg = err?.response?.data?.message || "Submission failed.";
       setVerifyStatus("error");
       setVerifyResult({ reason: msg });
-    } finally {
       setSubmitting(false);
     }
   };

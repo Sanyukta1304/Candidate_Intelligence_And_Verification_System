@@ -268,33 +268,83 @@ export default function ProjectsTab({ candidate }) {
   const [modalOpen, setModalOpen]   = useState(false);
   const [editProject, setEditProject] = useState(null);
 
+  // ✅ ENHANCED: Load projects on component mount and when GitHub verification changes
   useEffect(() => {
-    if (!isVerified) return;
-    setLoading(true);
-    getProjects()
-      .then((res) => setProjects(res.data.data || []))
-      .catch(() => setError("Could not load projects."))
-      .finally(() => setLoading(false));
+    if (!isVerified) {
+      setProjects([]);
+      return;
+    }
+    
+    loadProjects();
   }, [isVerified]);
 
+  // ✅ NEW: Added dedicated function for loading projects
+  const loadProjects = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      console.log('[ProjectsTab] Loading projects for verified candidate...');
+      
+      const res = await getProjects();
+      console.log('[ProjectsTab] API Response:', res);
+      
+      const projectList = res.data?.data || res.data || [];
+      if (Array.isArray(projectList)) {
+        console.log(`[ProjectsTab] Successfully loaded ${projectList.length} projects`);
+        setProjects(projectList);
+      } else {
+        console.warn('[ProjectsTab] Invalid project list format:', projectList);
+        setProjects([]);
+      }
+    } catch (err) {
+      console.error('[ProjectsTab] Error loading projects:', err);
+      setError("Could not load projects. Please try again.");
+      setProjects([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleDelete = (id) => {
+    // ✅ FIXED: Update UI immediately when project is deleted
+    // Don't wait for ATS reprocessing
     setProjects((prev) => prev.filter((p) => p._id !== id));
-    // Re-trigger scoring after deletion
-    if (candidate?._id) triggerScore(candidate._id).catch(() => {});
+    
+    // Trigger scoring in background - don't block deletion
+    if (candidate?._id) {
+      triggerScore(candidate._id).catch((err) => {
+        console.error('[ProjectsTab] Score trigger failed (non-blocking):', err);
+        // Non-blocking - user already sees deletion in UI
+      });
+    }
   };
 
   const handleProjectSaved = (savedProject) => {
+    // ✅ FIXED: Immediately update UI with saved project
+    // Show result right away without waiting for ATS processing
     setProjects((prev) => {
       const idx = prev.findIndex((p) => p._id === savedProject._id);
       if (idx >= 0) {
+        // Update existing project
         const updated = [...prev];
         updated[idx] = savedProject;
         return updated;
       }
+      // Add new project to top of list
       return [savedProject, ...prev];
     });
+    
     setModalOpen(false);
     setEditProject(null);
+    
+    // Refresh full project list in background to ensure sync
+    // But don't block modal close with this
+    setTimeout(() => {
+      loadProjects().catch((err) => {
+        console.error('[ProjectsTab] Background refresh failed:', err);
+        // Non-blocking
+      });
+    }, 1000);
   };
 
   return (

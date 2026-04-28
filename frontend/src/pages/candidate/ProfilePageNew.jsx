@@ -77,7 +77,8 @@ const ProfilePageNew = () => {
       // Load projects
       try {
         const projectsRes = await projectService.getProjects();
-        setProjects(Array.isArray(projectsRes) ? projectsRes : []);
+        const projectsList = projectsRes.data || projectsRes || [];
+        setProjects(Array.isArray(projectsList) ? projectsList : []);
       } catch (projErr) {
         console.error('Failed to load projects:', projErr);
         setProjects([]);

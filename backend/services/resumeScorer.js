@@ -3,6 +3,8 @@
  * Scores resume text for completeness, keyword density, and formatting quality
  */
 
+const { createSafeWordBoundaryRegex } = require('../utils/regexEscape');
+
 function scoreResume(resumeText = "") {
   if (!resumeText || typeof resumeText !== "string") {
     return {
@@ -94,7 +96,8 @@ function scoreResume(resumeText = "") {
 
   let keywordCount = 0;
   technicalKeywords.forEach((keyword) => {
-    const regex = new RegExp(`\\b${keyword}\\b`, "gi");
+    // ✅ FIXED: Use safe regex that escapes special characters in keywords (C++, C#, Node.js, etc)
+    const regex = createSafeWordBoundaryRegex(keyword, 'gi');
     const matches = text.match(regex);
     if (matches) keywordCount += matches.length;
   });

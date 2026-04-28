@@ -5,7 +5,7 @@ const NotificationSchema = new mongoose.Schema({
 
   type: {
     type: String,
-    enum: ['profile_viewed', 'profile_starred'],
+    enum: ['profile_viewed', 'profile_starred', 'shortlisted'],
     required: true
   },
 
