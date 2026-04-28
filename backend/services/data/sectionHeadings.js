@@ -14,7 +14,9 @@ module.exports = {
     'professional statement', 'personal statement', 'introduction',
     'professional introduction', 'career summary', 'who i am',
     'summary statement', 'executive profile', 'professional objective',
-    'introductory', 'intro'
+    'introductory', 'intro', 'profile summary', 'career highlights',
+    'professional highlights', 'highlights', 'personal summary',
+    'professional biography', 'biography'
   ],
   EXPERIENCE: [
     'experience', 'work experience', 'employment', 'employment history',
@@ -32,8 +34,11 @@ module.exports = {
     'academic history', 'schooling', 'university', 'training', 'colleges',
     'educational history', 'school', 'degree', 'qualifications section',
     'coursework', 'educational qualification', 'academic', 'formal education',
-    'higher education', 'educational background', 'degree information',
-    'ed', 'degrees earned', 'certifications and education'
+    'higher education', 'degree information', 'academic credentials', 'institution',
+    'ed', 'degrees earned', 'certifications and education', 'educational details',
+    'college education', 'university education', 'academic training', 'degree earned',
+    'degrees and certifications', 'educational achievements', 'qualifications and degree',
+    'bachelor', 'master', 'diploma', 'graduation'  // ✅ Added: common education terms
   ],
   SKILLS: [
     'skills', 'technical skills', 'core competencies', 'technologies', 'tech stack',
@@ -42,7 +47,10 @@ module.exports = {
     'relevant skills', 'skill set', 'technical proficiencies', 'expertise',
     'skills set', 'abilities', 'competencies', 'technical abilities', 'language skills',
     'technical expertise', 'software skills', 'programming skills', 'technical stack',
-    'technical knowledge', 'skill', 'technical'
+    'technical knowledge', 'skill', 'technical', 'technical toolkit', 'technology stack',
+    'expertise areas', 'areas of expertise', 'professional expertise', 'domain expertise',
+    'specialized skills', 'key competencies', 'tech skills', 'programming', 'languages',
+    'technical languages', 'backend', 'frontend', 'databases', 'frameworks'  // ✅ Added: common technical terms
   ],
   PROJECTS: [
     'projects', 'personal projects', 'portfolio', 'side projects', 'open source',
@@ -50,7 +58,9 @@ module.exports = {
     'featured projects', 'selected projects', 'project portfolio', 'github projects',
     'github', 'open source projects', 'projects developed', 'key projects',
     'notable projects', 'project highlights', 'portfolio projects', 'demo projects',
-    'web projects', 'apps', 'applications', 'project experience'
+    'web projects', 'apps', 'applications', 'project experience',
+    'projects completed', 'significant projects', 'major projects',
+    'projects and portfolio', 'implementation', 'implementations'
   ],
   CERTIFICATIONS: [
     'certifications', 'certificates', 'courses', 'online courses', 'professional certifications',
@@ -59,7 +69,9 @@ module.exports = {
     'accreditations', 'certifications and licenses', 'professional certifications',
     'certifications and awards', 'cert', 'certs', 'professional certs',
     'training', 'course', 'coursework', 'professional development', 'training received',
-    'certifications earned', 'credentials earned'
+    'certifications earned', 'credentials earned', 'professional licenses',
+    'certifications and credentials', 'professional qualifications', 'licensed',
+    'certifications and trainings', 'training and certifications'
   ],
   AWARDS: [
     'awards', 'achievements', 'honors', 'honours', 'recognition', 'accomplishments',

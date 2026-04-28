@@ -11,10 +11,11 @@ function stage8_structure(parseResult, sectionResult) {
   let structureScore = 0;
 
   // 1. Section completeness (30 points max)
+  // Include ALL important sections: summary, experience, education, skills, projects, certifications
   let sectionPoints = 0;
-  const requiredSections = ['summary', 'experience', 'education', 'skills'];
-  const presentRequired = requiredSections.filter(s => sections[s]).length;
-  sectionPoints = (presentRequired / requiredSections.length) * 30;
+  const importantSections = ['summary', 'experience', 'education', 'skills', 'projects', 'certifications'];
+  const presentSections = importantSections.filter(s => sections[s]).length;
+  sectionPoints = (presentSections / importantSections.length) * 30;
   structureScore += sectionPoints;
 
   // 2. Bullet point structure (25 points max)

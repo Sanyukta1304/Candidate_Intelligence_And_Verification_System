@@ -101,6 +101,18 @@ const ResumeScoreSchema = new mongoose.Schema(
     // Parsing info
     parse_success: { type: Boolean, default: true },
     parse_error: String,
+
+    // ✅ FIXED: Store detailed ATS breakdown for transparency
+    // New formula: Section(30%) + Keyword(25%) + Format(20%) + Skill(15%) + Project(10%)
+    ats_breakdown: {
+      section_score: { type: Number, default: 0 },      // 0-100 normalized
+      keyword_score: { type: Number, default: 0 },      // 0-100 normalized
+      format_score: { type: Number, default: 0 },       // 0-100 normalized
+      skill_score: { type: Number, default: 0 },        // 0-100 normalized (NEW)
+      project_strength: { type: Number, default: 0 },   // 0-100 normalized (NEW)
+      ats_score: { type: Number, default: 0 },          // Final ATS score (0-100)
+      resume_contribution: { type: Number, default: 0 } // ATS × 0.3 (0-30)
+    },
   },
   { timestamps: true }
 );

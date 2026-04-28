@@ -89,6 +89,34 @@ function stage2_sections(parseResult) {
   console.log('[Stage 2] Total lines:', lines.length);
   console.log('[Stage 2] Text length:', text.length, 'chars');
 
+  // ✅ FIXED: Reconstruct broken PDF headings
+  // PDFs sometimes split "Professional Summary" into two lines: "Professional" and "Summary"
+  // This step merges them back together before heading detection
+  for (let i = 0; i < lines.length - 1; i++) {
+    const line1 = lines[i].trim();
+    const line2 = lines[i + 1].trim();
+    
+    // Only process if both lines are very short (likely heading fragments)
+    if (line1.length > 0 && line1.length <= 20 && line2.length > 0 && line2.length <= 20) {
+      const merged = `${line1} ${line2}`;
+      
+      // Check if merged line matches any known heading
+      for (const headings of Object.values(sectionHeadings)) {
+        for (const heading of headings) {
+          if (merged.toLowerCase() === heading) {
+            // Merge the lines
+            lines[i] = merged;
+            originalLines[i] = merged;
+            lines.splice(i + 1, 1);
+            originalLines.splice(i + 1, 1);
+            console.log(`[Stage 2] ✓ MERGED: "${line1}" + "${line2}" → "${merged}"`);
+            break;
+          }
+        }
+      }
+    }
+  }
+
   // ── PASS 1: HEADING DETECTION ─────────────────────────────────────────
   const sectionLineIndices = {};
 
@@ -96,15 +124,19 @@ function stage2_sections(parseResult) {
     const line = lines[i].trim();
     if (line.length < 5) continue;  // Minimum 5 chars to avoid matching fragments like "nd", "th"
 
-    // Heading candidates: short lines with few words
+    // ✅ FIXED: Relaxed heading candidate detection to catch more real-world variations
+    // Allow up to 10 words and 120 characters (was 8 words, 120 chars)
+    // This catches: "Bachelor of Engineering, Computer Science and Engineering" (education line)
     const wordCount         = line.split(/\s+/).filter(w => w.length > 0).length;
-    const isHeadingCandidate = line.length <= 120 && wordCount <= 8;
+    const isHeadingCandidate = line.length <= 150 && wordCount <= 10;
     if (!isHeadingCandidate) continue;
 
-    // Plausibility check: headings are typically short, no trailing periods
-    // Allow commas (e.g., "Skills, Certifications") and bullets at start
+    // ✅ FIXED: Relaxed plausibility check
+    // Allow commas (e.g., education lines with "B.E., CSE") and longer headings
+    // Old: <= 80 chars, no trailing period or comma
+    // New: <= 120 chars, no TRAILING period, commas allowed in education lines
     const originalLine     = originalLines[i].trim();
-    const isPlausibleHeading = originalLine.length <= 80 &&
+    const isPlausibleHeading = originalLine.length <= 120 &&
                                !originalLine.endsWith('.') &&
                                !originalLine.endsWith(',');
     if (!isPlausibleHeading) continue;
@@ -158,7 +190,8 @@ function stage2_sections(parseResult) {
     console.log('\n[Stage 2] Pass 2: Running density heuristics...');
 
     const datePattern  = /\b(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*[\s,]+\d{4}\b|\b\d{4}\s*[-–—]\s*(\d{4}|present|current|now)\b/i;
-    const uniKeywords  = /\b(university|college|institute|school|b\.?tech|b\.?e|m\.?tech|m\.?sc|b\.?sc|bca|mca|degree|bachelor|master|phd|diploma|b\.?a|m\.?a)\b/i;
+    // ✅ IMPROVED: Added more keywords for Indian format resumes (BE, BTech, CGPA, Institute names, Graduation)
+    const uniKeywords  = /\b(university|college|institute|school|academy|acharya|iit|nit|bits|vit|b\.?tech|b\.?e|m\.?tech|m\.?sc|b\.?sc|bca|mca|degree|bachelor|master|phd|diploma|b\.?a|m\.?a|graduation|graduated|cgpa|gpa)\b/i;
     const companyRole  = /\b(engineer|developer|manager|analyst|coordinator|specialist|associate|director|lead|architect|consultant|scientist|designer)\b/i;
     const bulletLine   = /^\s*[-•*–→]\s+/;
     const certKeywords = /\b(certified|certificate|certification|credentials|aws certified|ccna|ccnp|cissp|azure|gcp|comptia|scrum master|pmp)\b/i;
@@ -253,6 +286,22 @@ function stage2_sections(parseResult) {
     }
   }
 
+  // ✅ FIXED: MAP LANGUAGES → SKILLS if LANGUAGES contains technical stack
+  // Many resumes use "Languages:" to mean technical skills (Python, JavaScript, etc.)
+  // This remapping is critical for correct Skills detection
+  if (sections.LANGUAGES && !sections.SKILLS) {
+    const langContent = sections.LANGUAGES.toLowerCase();
+    const techKeywords = ['python', 'java', 'javascript', 'react', 'nodejs', 'node.js', 'express', 'mongodb', 'sql', 'docker', 'git', 'aws', 'backend', 'frontend', 'database', 'framework', 'api', 'rest'];
+    const hasTechStack = techKeywords.some(keyword => langContent.includes(keyword));
+    
+    if (hasTechStack) {
+      console.log(`[Stage 2] ✅ REMAPPING: LANGUAGES contains technical stack - treating as SKILLS`);
+      sections.SKILLS = sections.LANGUAGES;
+      sections.LANGUAGES = null; // Clear LANGUAGES
+      console.log(`[Stage 2]    Content preview: "${sections.SKILLS.substring(0, 80)}"`);
+    }
+  }
+
   console.log(`\n[Stage 2] Final sections with content:`,
     Object.entries(sections).filter(([, v]) => v).map(([k]) => k));
 
@@ -292,18 +341,25 @@ function stage2_sections(parseResult) {
   console.log('[Stage 2] Role detected :', detectedRole);
   console.log('[Stage 2] ==============================================\n');
 
+  // ✅ FIXED: Generate section_presence based on ACTUAL sections present (after remapping)
+  // This directly fixes frontend Section Analysis
+  const section_presence = {
+    summary:        !!sections.SUMMARY,
+    experience:     !!sections.EXPERIENCE,
+    education:      !!sections.EDUCATION,
+    skills:         !!sections.SKILLS,  // Now correctly reflects remapped LANGUAGES→SKILLS
+    projects:       !!sections.PROJECTS,
+    certifications: !!sections.CERTIFICATIONS,
+  };
+  
+  console.log(`[Stage 2] ✅ Section Presence:`, section_presence);
+  console.log(`[Stage 2] Sections detected: ${Object.values(section_presence).filter(Boolean).length}/6`);
+
   return {
     sections,
     detected_role: detectedRole,
     role_scores:   roleScores,
-    section_presence: {
-      summary:        !!sections.SUMMARY,
-      experience:     !!sections.EXPERIENCE,
-      education:      !!sections.EDUCATION,
-      skills:         !!sections.SKILLS,
-      projects:       !!sections.PROJECTS,
-      certifications: !!sections.CERTIFICATIONS,
-    },
+    section_presence,  // ✅ Now correctly reflects remapped sections
   };
 }
 

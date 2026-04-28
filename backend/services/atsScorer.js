@@ -82,7 +82,13 @@ async function scoreResume(filePath) {
 
     console.log(`[ATS Scorer] Complete! Final Score: ${finalResult.final_score}/100`);
 
-    return finalResult;
+    // ✅ Stage 10 now returns KPI component scores using the simplified medium-level ATS formula
+    // Use them directly instead of recalculating
+    return {
+      ...finalResult,
+      // ✅ KPI component scores already calculated by Stage 10
+      // section_score, keyword_score, format_score, skill_score, project_strength included in finalResult
+    };
   } catch (error) {
     console.error('[ATS Scorer] Error:', error.message);
     return {

@@ -26,6 +26,28 @@ const CandidateSchema = new mongoose.Schema({
   extracted_skills: [String], // Skills extracted from the uploaded resume content
   resume_uploaded_at: { type: Date, default: null },
 
+  // ✅ FIXED: Store detailed ATS score breakdown for transparency
+  // New formula: Section(30%) + Keyword(25%) + Format(20%) + Skill(15%) + Project(10%)
+  ats_breakdown: {
+    section_score: { type: Number, default: 0 },      // 0-100 normalized
+    keyword_score: { type: Number, default: 0 },      // 0-100 normalized
+    format_score: { type: Number, default: 0 },       // 0-100 normalized
+    skill_score: { type: Number, default: 0 },        // 0-100 normalized (NEW)
+    project_strength: { type: Number, default: 0 },   // 0-100 normalized (NEW)
+    ats_score: { type: Number, default: 0 },          // Final ATS score (0-100)
+    resume_contribution: { type: Number, default: 0 } // ATS × 0.3 (0-30)
+  },
+
+  // ✅ FIXED: Store section presence for Section Analysis UI
+  section_presence: {
+    summary: { type: Boolean, default: false },
+    experience: { type: Boolean, default: false },
+    education: { type: Boolean, default: false },
+    skills: { type: Boolean, default: false },
+    projects: { type: Boolean, default: false },
+    certifications: { type: Boolean, default: false }
+  },
+
   resume_score: { type: Number, default: 0 },
   skills_score: { type: Number, default: 0 },
   projects_score: { type: Number, default: 0 },

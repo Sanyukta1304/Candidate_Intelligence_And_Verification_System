@@ -10,6 +10,7 @@ const ResumeScore = require("../models/ResumeScore");
 const { scoreProject } = require("./projectScorer");
 const { scoreSkills } = require("./skillsScorer");
 const { scoreResume } = require("./resumeScorer");
+const { scoreResume: scoreResumeFullPipeline } = require("./atsScorer");
 const { extractSkillsFromResume } = require("./resumeSkillsExtractor");
 
 /**
@@ -69,12 +70,22 @@ async function orchestrate(candidateId) {
     // 4. Filter verified projects
     const verifiedProjects = projects.filter((p) => p.verified);
 
-    // 5. Resume scoring - Read actual resume file and score it
+    // 5. Resume scoring - Run FULL ATS PIPELINE (all 10 stages)
     let resumeText = "";
     let extractedSkills = [];
+    let atsResult = null;
     
     if (candidate.resume_url) {
-      // Read resume file from uploads folder
+      // ✅ CRITICAL: Build full file path for ATS pipeline
+      const resumeFilePath = path.join(__dirname, "../uploads/resumes", candidate.resume_url);
+      
+      console.log(`[Orchestrator] Starting full ATS pipeline for: ${candidate.resume_url}`);
+      
+      // ✅ Run FULL 10-stage ATS pipeline (not just text scoring)
+      atsResult = await scoreResumeFullPipeline(resumeFilePath);
+      console.log(`[Orchestrator] ATS Pipeline completed. Final Score: ${atsResult.final_score}/100`);
+      
+      // Also get text for skill extraction
       resumeText = await getResumeText(candidate.resume_url);
       console.log(`[Orchestrator] Resume text extracted: ${resumeText.length} characters`);
       
@@ -86,14 +97,53 @@ async function orchestrate(candidateId) {
       candidate.extracted_skills = extractedSkills;
     }
     
-    const resumeResult = scoreResume(resumeText || "");
+    // ✅ If full ATS pipeline ran, use its results; otherwise fall back to simple scoring
+    const resumeResult = atsResult ? {
+      breakdown: {
+        section_score: atsResult.section_score || 0,
+        keyword_score: atsResult.keyword_score || 0,
+        format_score: atsResult.format_score || 0,
+        skill_score: atsResult.skill_score || 0,
+        project_strength: atsResult.project_strength || 0,
+        ats_score: Math.min(Math.max(atsResult.final_score || 0, 0), 100)
+      },
+      total_ats_score: Math.min(Math.max(atsResult.final_score || 0, 0), 100)
+    } : scoreResume(resumeText || "");
 
+    // ✅ FIXED: Extract normalized ATS score from breakdown (0-100 scale)
+    // This is the main ATS Score that should be displayed
     const atsScore =
-      resumeResult && typeof resumeResult.total_ats_score === "number"
-        ? resumeResult.total_ats_score
+      resumeResult && typeof resumeResult.breakdown?.ats_score === "number"
+        ? resumeResult.breakdown.ats_score
         : 0;
 
+    // ✅ Resume Contribution = ATS Score weighted to 0-30 range (30% of total 100 score)
     const resumeContribution = Math.round((atsScore / 100) * 30);
+
+    // ✅ Store ATS breakdown for transparency (now with new KPI components)
+    const atsBreakdown = {
+      section_score: resumeResult?.breakdown?.section_score || 0,
+      keyword_score: resumeResult?.breakdown?.keyword_score || 0,
+      format_score: resumeResult?.breakdown?.format_score || 0,
+      skill_score: resumeResult?.breakdown?.skill_score || 0,
+      project_strength: resumeResult?.breakdown?.project_strength || 0,
+      ats_score: atsScore,
+      resume_contribution: resumeContribution,
+    };
+
+    // ✅ Extract section presence from ATS result for Section Analysis
+    // This now correctly reflects remapped LANGUAGES→SKILLS
+    const sectionPresence = atsResult?.section_presence || {
+      summary: false,
+      experience: false,
+      education: false,
+      skills: false,
+      projects: false,
+      certifications: false
+    };
+    
+    console.log(`[Orchestrator] ✅ Section Presence from ATS:`, sectionPresence);
+    console.log(`[Orchestrator] Sections detected: ${Object.values(sectionPresence).filter(Boolean).length}/6`);
 
     // 6. Skills scoring - Pass actual resume text and extracted skills
     const { scoredSkills, skills_score } = scoreSkills(
@@ -123,6 +173,11 @@ async function orchestrate(candidateId) {
     candidate.skills_score = Number(skills_score) || 0;
     candidate.projects_score = Number(projectsContribution) || 0;
     candidate.total_score = Number(totalScore) || 0;
+    
+    // ✅ FIXED: Store ATS breakdown and section presence for transparency and UI
+    candidate.ats_breakdown = atsBreakdown;
+    candidate.section_presence = sectionPresence;
+    
     candidate.skills = scoredSkills || [];
     candidate.extracted_skills = extractedSkills;  // ✅ Store extracted skills
     candidate.last_scored = new Date();
@@ -136,6 +191,17 @@ async function orchestrate(candidateId) {
         ...(resumeResult || {}),
         total_ats_score: atsScore,
         final_score: atsScore,  // Map total_ats_score to final_score for ResumeScore model
+        
+        // ✅ FIXED: Store full breakdown with new KPI components
+        ats_breakdown: atsBreakdown,
+        components: {
+          section_score: atsBreakdown.section_score,
+          keyword_score: atsBreakdown.keyword_score,
+          format_score: atsBreakdown.format_score,
+          skill_score: atsBreakdown.skill_score,
+          project_strength: atsBreakdown.project_strength,
+        },
+        
         scored_at: new Date(),
       },
       { upsert: true, new: true }

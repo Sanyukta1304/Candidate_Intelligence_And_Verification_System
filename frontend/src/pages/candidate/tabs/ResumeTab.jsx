@@ -257,18 +257,35 @@ export default function ResumeTab({ candidate }) {
 
   // ── Derived values ─────────────────────────────────────────────
   const s = resumeScore;
-  const sectionScore  = s?.sections?.section_score  ?? 0;
-  const keywordScore  = s?.keywords?.keyword_score  ?? 0;
-  const formatScore   = s?.format?.format_score      ?? 0;
-  const totalAts      = s?.total_ats_score           ?? 0;
+  
+  // ✅ PHASE 2: Extract component scores ONLY from backend ats_breakdown (0-100 normalized)
+  // All values come from backend ATS pipeline - NO fallbacks, NO local calculations
+  // Formula: Section(30%) + Keyword(25%) + Format(20%) + Skill(15%) + Project(10%)
+  const sectionScore  = s?.ats_breakdown?.section_score ?? 0;
+  const keywordScore  = s?.ats_breakdown?.keyword_score ?? 0;
+  const formatScore   = s?.ats_breakdown?.format_score ?? 0;
+  const skillScore    = s?.ats_breakdown?.skill_score ?? 0;
+  const projectStrength = s?.ats_breakdown?.project_strength ?? 0;
+  const totalAts      = s?.ats_breakdown?.ats_score ?? 0;
+  const resumeContribution = s?.ats_breakdown?.resume_contribution ?? 0;
+  
+  // ✅ FIXED: Extract section presence ONLY from backend (no defaults/fallbacks)
+  const sectionPresence = s?.section_presence || {
+    summary: false,
+    experience: false,
+    education: false,
+    skills: false,
+    projects: false,
+    certifications: false
+  };
 
-  // Pie chart: ATS breakdown
+  // Pie chart: ATS breakdown (now shows all 5 components)
   const pieData = {
-    labels: ["Section Completeness", "Keyword Density", "Format Score"],
+    labels: ["Section Completeness", "Keyword Density", "Format Quality", "Skill Depth", "Project Strength"],
     datasets: [{
-      data: [sectionScore, keywordScore, formatScore],
-      backgroundColor: [C.teal, "#14b8a6", C.lightTeal],
-      borderColor: [C.teal, "#14b8a6", C.lightTeal],
+      data: [sectionScore, keywordScore, formatScore, skillScore, projectStrength],
+      backgroundColor: [C.teal, "#14b8a6", C.lightTeal, "#0d9488", "#99f6e4"],
+      borderColor: [C.teal, "#14b8a6", C.lightTeal, "#0d9488", "#99f6e4"],
       borderWidth: 1,
     }],
   };
@@ -278,6 +295,14 @@ export default function ResumeTab({ candidate }) {
         position: "bottom",
         labels: { boxWidth: 10, font: { size: 11 }, color: C.slate },
       },
+      tooltip: {
+        callbacks: {
+          label: function(context) {
+            // Show value out of 100
+            return context.label + ": " + Math.round(context.parsed) + " / 100";
+          }
+        }
+      }
     },
   };
 
@@ -341,7 +366,7 @@ export default function ResumeTab({ candidate }) {
             Resume ATS Analysis
           </h2>
           <p style={{ margin: "4px 0 0", color: C.slate, fontSize: 13 }}>
-            Section Completeness (35%) · Keyword Density (35%) · Format Score (30%)
+            ✓ ATS Score = (Section × 30%) + (Keyword × 35%) + (Format × 25%) + (Length × 10%)
           </p>
         </div>
 
@@ -424,17 +449,17 @@ export default function ResumeTab({ candidate }) {
             ))
           ) : (
             <>
-              <CheckItem label="Contact information"    present={s?.sections?.has_contact} />
-              <CheckItem label="Work experience"        present={s?.sections?.has_experience} />
-              <CheckItem label="Education"              present={s?.sections?.has_education} />
-              <CheckItem label="Skills section"         present={s?.sections?.has_skills} />
-              <CheckItem label="Projects section"       present={s?.sections?.has_projects} />
-              <CheckItem label="Summary / Objective"    present={s?.sections?.has_summary} />
+              <CheckItem label="Professional Summary"    present={sectionPresence?.summary || s?.sections?.has_summary} />
+              <CheckItem label="Work Experience"        present={sectionPresence?.experience || s?.sections?.has_experience} />
+              <CheckItem label="Education"              present={sectionPresence?.education || s?.sections?.has_education} />
+              <CheckItem label="Skills Section"         present={sectionPresence?.skills || s?.sections?.has_skills} />
+              <CheckItem label="Projects / Portfolio"   present={sectionPresence?.projects || s?.sections?.has_projects} />
+              <CheckItem label="Certifications"         present={sectionPresence?.certifications} />
               <div style={{ marginTop: 12 }}>
                 <ScoreBar
                   label="Section Score"
                   value={sectionScore}
-                  max={35}
+                  max={100}
                   color={C.teal}
                 />
               </div>
@@ -468,19 +493,19 @@ export default function ResumeTab({ candidate }) {
               <SignalBar
                 label="Section Completeness"
                 value={sectionScore}
-                max={35}
+                max={100}
                 color={C.teal}
               />
               <SignalBar
                 label="Keyword Density"
                 value={keywordScore}
-                max={35}
+                max={100}
                 color="#14b8a6"
               />
               <SignalBar
                 label="Format Quality"
                 value={formatScore}
-                max={30}
+                max={100}
                 color="#0891b2"
               />
               <div style={{
@@ -488,13 +513,13 @@ export default function ResumeTab({ candidate }) {
                 background: C.mild, borderRadius: 6,
               }}>
                 <div style={{ fontSize: 12, color: C.slate, marginBottom: 4 }}>
-                  Keyword density ratio
+                  ATS Score Calculation
                 </div>
                 <div style={{ fontWeight: 700, color: C.navy, fontSize: 16 }}>
-                  {s?.keywords?.action_verb_count ?? 0} action verbs
+                  {Math.round(totalAts)} / 100
                 </div>
-                <div style={{ fontSize: 11, color: C.slate }}>
-                  in {s?.keywords?.total_word_count ?? 0} total words
+                <div style={{ fontSize: 11, color: C.slate, marginTop: 8 }}>
+                  ✓ Formula: (Section × 30%) + (Keyword × 35%) + (Format × 25%) + (Length × 10%)
                 </div>
               </div>
             </>

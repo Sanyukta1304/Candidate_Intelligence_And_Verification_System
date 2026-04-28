@@ -318,6 +318,7 @@ exports.uploadResume = async (req, res, next) => {
       // Fetch updated candidate with new scores
       const updatedCandidate = await Candidate.findById(candidate._id);
       
+      // ✅ Return FULL KPI breakdown for frontend
       res.status(200).json({
         success: true,
         message: 'Resume uploaded and skill scores recalculated successfully',
@@ -326,12 +327,35 @@ exports.uploadResume = async (req, res, next) => {
           filename: req.file.originalname,
           file_size: req.file.size,
           upload_time: new Date(),
+          
+          // ✅ CRITICAL: Return all KPI component scores (0-100 normalized)
           scores: {
-            resume_score: updatedCandidate.resume_score,
-            skills_score: updatedCandidate.skills_score,
-            projects_score: updatedCandidate.projects_score,
-            total_score: updatedCandidate.total_score
+            resume_score: updatedCandidate.resume_score,              // 0-30
+            skills_score: updatedCandidate.skills_score,              // 0-40
+            projects_score: updatedCandidate.projects_score,          // 0-30
+            total_score: updatedCandidate.total_score                 // 0-100
           },
+          
+          // ✅ CRITICAL: Return ATS breakdown for KPI Analysis cards
+          ats_breakdown: {
+            section_score: updatedCandidate.ats_breakdown?.section_score || 0,   // 0-100
+            keyword_score: updatedCandidate.ats_breakdown?.keyword_score || 0,   // 0-100
+            format_score: updatedCandidate.ats_breakdown?.format_score || 0,     // 0-100
+            length_score: updatedCandidate.ats_breakdown?.length_score || 0,     // 0-100
+            ats_score: updatedCandidate.ats_breakdown?.ats_score || 0,           // 0-100
+            resume_contribution: updatedCandidate.ats_breakdown?.resume_contribution || 0  // 0-30
+          },
+          
+          // ✅ CRITICAL: Return section presence for Section Analysis UI
+          section_presence: updatedCandidate.section_presence || {
+            summary: false,
+            experience: false,
+            education: false,
+            skills: false,
+            projects: false,
+            certifications: false
+          },
+          
           skills: updatedCandidate.skills
         }
       });
@@ -386,7 +410,56 @@ exports.getResumeScore = async (req, res) => {
       });
     }
 
-    res.json({ success: true, data: score });
+    // ✅ FIXED: Transform response to match frontend expectations
+    // Frontend expects: All 5 KPI components, section_presence, improvement_suggestions
+    // All component scores are 0-100 normalized from Phase 2 ATS pipeline
+    const transformedScore = {
+      ...score.toObject(),
+      
+      // ✅ Return all 5 KPI component scores (0-100 each) for dashboard display
+      ats_breakdown: {
+        section_score: score.ats_breakdown?.section_score || score.components?.section_score || 0,
+        keyword_score: score.ats_breakdown?.keyword_score || score.components?.keyword_score || 0,
+        format_score: score.ats_breakdown?.format_score || score.components?.format_score || 0,
+        skill_score: score.ats_breakdown?.skill_score || score.components?.skill_score || 0,
+        project_strength: score.ats_breakdown?.project_strength || score.components?.project_strength || 0,
+        ats_score: score.ats_breakdown?.ats_score || score.final_score || 0,
+        resume_contribution: score.ats_breakdown?.resume_contribution || Math.round(((score.ats_breakdown?.ats_score || score.final_score || 0) / 100) * 30)
+      },
+      
+      // ✅ FIXED: Return section presence for Section Analysis UI
+      section_presence: score.section_presence || {
+        summary: false,
+        experience: false,
+        education: false,
+        skills: false,
+        projects: false,
+        certifications: false
+      },
+      
+      // ✅ Return improvement suggestions from Stage 10
+      improvement_suggestions: score.improvement_suggestions || [],
+      
+      // ✅ Main ATS score that should be displayed (0-100)
+      total_ats_score: score.ats_breakdown?.ats_score || score.final_score || 0,
+      final_score: score.ats_breakdown?.ats_score || score.final_score || 0,
+      
+      // Legacy fields for backward compatibility
+      sections: {
+        section_score: score.ats_breakdown?.section_score || score.components?.section_score || 0
+      },
+      
+      keywords: {
+        keyword_score: score.ats_breakdown?.keyword_score || score.components?.keyword_score || 0,
+        total_word_count: score.meta?.word_count || 0
+      },
+      
+      format: {
+        format_score: score.ats_breakdown?.format_score || score.components?.format_score || 0
+      }
+    };
+
+    res.json({ success: true, data: transformedScore });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }

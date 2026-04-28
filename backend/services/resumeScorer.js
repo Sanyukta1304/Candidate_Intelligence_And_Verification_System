@@ -151,6 +151,23 @@ function scoreResume(resumeText = "") {
   sections.length_analysis = lengthScore;
   score += lengthScore;
 
+  // ✅ FIXED: Normalize all components to 0-100 scale for proper ATS calculation
+  // Each component is capped at 25, so multiply by 4 to get 0-100 scale
+  const normalizedSectionScore = (sectionScore / 25) * 100;  // 0-100
+  const normalizedKeywordScore = (keywordScore / 25) * 100;  // 0-100
+  const normalizedFormatScore = (formatScore / 25) * 100;    // 0-100
+  const normalizedLengthScore = (lengthScore / 25) * 100;    // 0-100
+
+  // ✅ FIXED: Calculate ATS Score using weighted formula
+  // Formula: (Section Score × 30%) + (Keyword Score × 35%) + (Format Score × 25%) + (Length Score × 10%)
+  // This ensures all components contribute meaningfully and total = 100
+  const atsScore = Math.round(
+    (normalizedSectionScore * 0.30) +
+    (normalizedKeywordScore * 0.35) +
+    (normalizedFormatScore * 0.25) +
+    (normalizedLengthScore * 0.10)
+  );
+
   // Generate improvement suggestions
   const improvements = [];
 
@@ -174,16 +191,34 @@ function scoreResume(resumeText = "") {
   }
 
   return {
-    total_ats_score: Math.min(Math.max(score, 0), 100),
+    total_ats_score: Math.min(Math.max(atsScore, 0), 100),
     parse_success: true,
     word_count: wordCount,
     section_scores: sectionScores,
+    
+    // ✅ FIXED: Return normalized component scores (0-100 scale) for clear breakdown
+    breakdown: {
+      section_score: Math.min(Math.max(normalizedSectionScore, 0), 100),
+      keyword_score: Math.min(Math.max(normalizedKeywordScore, 0), 100),
+      format_score: Math.min(Math.max(normalizedFormatScore, 0), 100),
+      length_score: Math.min(Math.max(normalizedLengthScore, 0), 100),
+      ats_score: Math.min(Math.max(atsScore, 0), 100),
+    },
+    
+    // Keep legacy fields for backward compatibility
     section_completeness: sections.section_completeness,
     keyword_density: sections.keyword_density,
     format_quality: sections.format_quality,
     length_analysis: sections.length_analysis,
+    
+    // Formula transparency
+    formula: {
+      description: "ATS Score = (Section × 30%) + (Keyword × 35%) + (Format × 25%) + (Length × 10%)",
+      weights: { section: 0.30, keyword: 0.35, format: 0.25, length: 0.10 },
+      raw_components: { section: sectionScore, keyword: keywordScore, format: formatScore, length: lengthScore }
+    },
+    
     improvement_suggestions: improvements.length > 0 ? improvements : ["Resume looks complete"],
-    breakdown: sections,
   };
 }
 

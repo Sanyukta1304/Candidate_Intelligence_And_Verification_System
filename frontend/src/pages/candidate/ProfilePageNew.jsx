@@ -254,24 +254,45 @@ const ProfilePageNew = () => {
       const response = await candidateService.uploadResume(file);
 
       if (response.success) {
+        // ✅ FIXED: Extract FULL KPI breakdown from backend response
+        // Backend now returns ats_breakdown with all component scores
+        const atsBreakdown = response.data.ats_breakdown || {
+          section_score: 0,
+          keyword_score: 0,
+          format_score: 0,
+          length_score: 0,
+          ats_score: 0,
+          resume_contribution: 0
+        };
+        
+        const sectionPresence = response.data.section_presence || {};
+        
         // ✅ FIXED: Immediately update state with new resume and recalculated scores
         // Backend now calls orchestrate automatically, so scores are fresh
         setProfile(prev => ({
           ...prev,
           resume_url: response.data.resume_url,
-          resume_score: response.data.scores?.resume_score || prev.resume_score,
-          skills_score: response.data.scores?.skills_score || prev.skills_score,
-          projects_score: response.data.scores?.projects_score || prev.projects_score,
-          total_score: response.data.scores?.total_score || prev.total_score,
+          resume_score: atsBreakdown.resume_contribution || response.data.scores?.resume_score || 0,
+          skills_score: response.data.scores?.skills_score || 0,
+          projects_score: response.data.scores?.projects_score || 0,
+          total_score: response.data.scores?.total_score || 0,
+          ats_breakdown: atsBreakdown,
+          section_presence: sectionPresence,
           skills: response.data.skills || prev.skills
         }));
 
-        // Update score card
+        // ✅ FIXED: Update score card with ALL KPI component values
+        // Use backend values ONLY, no local calculations
         setScoreCard({
           skills: response.data.scores?.skills_score || 0,
-          resume: response.data.scores?.resume_score || 0,
+          resume: atsBreakdown.resume_contribution || 0,
           projects: response.data.scores?.projects_score || 0,
           total: response.data.scores?.total_score || 0,
+          // ✅ Also store KPI component scores for dashboard display
+          section_score: atsBreakdown.section_score || 0,
+          keyword_score: atsBreakdown.keyword_score || 0,
+          format_score: atsBreakdown.format_score || 0,
+          ats_score: atsBreakdown.ats_score || 0
         });
 
         setSuccessMessage('Resume uploaded and skill scores recalculated!');
@@ -867,40 +888,6 @@ const ProfilePageNew = () => {
                 >
                   Basic Info
                 </button>
-                {canAccessRestrictedFeatures && (
-                  <>
-                    <button
-                      onClick={() => setEditModalTab('skills')}
-                      className={`pb-4 px-4 font-semibold border-b-2 transition-colors ${
-                        editModalTab === 'skills'
-                          ? 'border-primary-dark text-primary-dark'
-                          : 'border-transparent text-slate-600 hover:text-primary-dark'
-                      }`}
-                    >
-                      Skills
-                    </button>
-                    <button
-                      onClick={() => setEditModalTab('resume')}
-                      className={`pb-4 px-4 font-semibold border-b-2 transition-colors ${
-                        editModalTab === 'resume'
-                          ? 'border-primary-dark text-primary-dark'
-                          : 'border-transparent text-slate-600 hover:text-primary-dark'
-                      }`}
-                    >
-                      Resume
-                    </button>
-                  </>
-                )}
-                {!canAccessRestrictedFeatures && (
-                  <>
-                    <button className="pb-4 px-4 font-semibold text-slate-400 opacity-50 cursor-not-allowed">
-                      Skills 🔒
-                    </button>
-                    <button className="pb-4 px-4 font-semibold text-slate-400 opacity-50 cursor-not-allowed">
-                      Resume 🔒
-                    </button>
-                  </>
-                )}
               </div>
 
               {/* Form Fields */}
@@ -1005,181 +992,10 @@ const ProfilePageNew = () => {
                 </div>
               )}
 
-              {editModalTab === 'skills' && (
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-2">
-                      Your Skills
-                    </label>
-                    <p className="text-sm text-slate-500 mb-3">
-                      Type a skill and press Enter to add it. Skills used in your verified GitHub projects automatically receive bonus scoring.
-                    </p>
-                    <div className="flex gap-2 mb-3">
-                      <input
-                        type="text"
-                        value={skillInput}
-                        onChange={(e) => setSkillInput(e.target.value)}
-                        onKeyPress={(e) => {
-                          if (e.key === 'Enter') {
-                            e.preventDefault();
-                            handleAddSkill();
-                          }
-                        }}
-                        className="flex-1 px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-dark"
-                        placeholder="e.g., React, Node.js, Python"
-                      />
-                      <button
-                        onClick={handleAddSkill}
-                        className="px-4 py-2 bg-primary-dark text-white rounded-lg hover:bg-slate-800"
-                      >
-                        Add
-                      </button>
-                    </div>
-                    {editForm.skills && editForm.skills.length > 0 && (
-                      <div className="flex flex-wrap gap-2">
-                        {editForm.skills.map((skill, idx) => (
-                          <span
-                            key={idx}
-                            className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm flex items-center gap-2"
-                          >
-                            {typeof skill === 'object' ? skill.name : skill}
-                            <button
-                              onClick={() => handleRemoveSkill(idx)}
-                              className="text-blue-700 hover:text-blue-900"
-                            >
-                              ✕
-                            </button>
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                  </div>
 
-                  {/* Skill Score Display */}
-                  {scoreCard && (
-                    <div className="bg-slate-50 rounded-lg border border-slate-200 p-4">
-                      <div className="flex justify-between items-center mb-2">
-                        <p className="text-sm font-semibold text-slate-700">Skills Score</p>
-                        <p className="text-sm font-semibold text-slate-700">
-                          {scoreCard.skills || 0}/40
-                        </p>
-                      </div>
-                      <div className="w-full bg-slate-200 rounded-full h-2">
-                        <div
-                          className="bg-blue-500 h-2 rounded-full"
-                          style={{ width: `${(scoreCard.skills || 0) / 40 * 100}%` }}
-                        ></div>
-                      </div>
-                      <p className="text-xs text-slate-500 mt-2">
-                        Scoring: declaration (20%) + resume mention (30%) + project usage (50%) per skill
-                      </p>
-                    </div>
-                  )}
 
-                  <button
-                    onClick={handleSaveProfile}
-                    disabled={verifying}
-                    className="w-full px-6 py-3 bg-primary-dark text-white rounded-lg hover:bg-slate-800 disabled:opacity-50 font-semibold"
-                  >
-                    {verifying ? 'Saving...' : 'Save + re-score'}
-                  </button>
-                </div>
-              )}
 
-              {editModalTab === 'resume' && (
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-2">
-                      Upload Resume
-                    </label>
-                    <p className="text-sm text-slate-500 mb-3">
-                      Upload your latest resume in PDF format. It will be automatically scanned for ATS scoring.
-                    </p>
-                    
-                    {profile?.resume_url ? (
-                      <div className="bg-slate-50 rounded-lg border border-slate-200 p-4 mb-4">
-                        <div className="flex justify-between items-start mb-3">
-                          <div>
-                            <p className="font-semibold text-slate-900">Current Resume</p>
-                            <p className="text-sm text-slate-600">
-                              Uploaded {resumeScore?.meta?.scored_at ? new Date(resumeScore.meta.scored_at).toLocaleDateString() : 'recently'}
-                            </p>
-                          </div>
-                          <div className="text-right">
-                            <div className="text-4xl font-bold text-primary-dark">{resumeScore.final_score || 0}</div>
-                            <p className="text-xs text-slate-500">/100</p>
-                          </div>
-                        </div>
-                        <a
-                          onClick={handleDownloadResume}
-                          className="inline-block px-4 py-2 bg-primary-dark text-white rounded-lg hover:bg-slate-800 text-sm cursor-pointer"
-                        >
-                          Download Resume
-                        </a>
-                      </div>
-                    ) : (
-                      <div className="border-2 border-dashed border-slate-300 rounded-lg p-8 text-center mb-4">
-                        <div className="text-4xl mb-4">📄</div>
-                        <p className="text-slate-600 mb-4">Upload your resume</p>
-                        <input
-                          type="file"
-                          accept=".pdf"
-                          onChange={handleResumeUpload}
-                          disabled={resumeUploading}
-                          className="mx-auto"
-                        />
-                        <p className="text-xs text-slate-500 mt-2">
-                          Supported format: PDF only. Max file size: 5MB.
-                        </p>
-                      </div>
-                    )}
 
-                    {/* Replace Resume Section */}
-                    <div className="border-2 border-dashed border-slate-300 rounded-lg p-6 text-center">
-                      <p className="font-semibold text-slate-900 mb-2">Replace resume</p>
-                      <p className="text-sm text-slate-600 mb-4">
-                        Upload a new PDF resume. It will be automatically scored by our ATS engine.
-                      </p>
-                      <input
-                        type="file"
-                        accept=".pdf"
-                        onChange={handleResumeUpload}
-                        disabled={resumeUploading}
-                        className="mx-auto"
-                      />
-                      <p className="text-xs text-slate-500 mt-2">
-                        Supported format: PDF only. Max file size: 5MB. Your resume will be re-scored immediately after upload.
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Resume Score Display */}
-                  {resumeScore && (
-                    <div className="bg-slate-50 rounded-lg border border-slate-200 p-4">
-                      <div className="flex justify-between items-center mb-2">
-                        <p className="text-sm font-semibold text-slate-700">Resume Score</p>
-                        <p className="text-sm font-semibold text-slate-700">
-                          {scoreCard?.resume || 0}/30
-                        </p>
-                      </div>
-                      <div className="w-full bg-slate-200 rounded-full h-2">
-                        <div
-                          className="bg-green-500 h-2 rounded-full"
-                          style={{ width: `${(scoreCard?.resume || 0) / 30 * 100}%` }}
-                        ></div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {!canAccessRestrictedFeatures && editModalTab !== 'basic' && (
-                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                  <p className="text-sm text-yellow-800">
-                    ⚠️ This section is locked until GitHub verification is complete.
-                  </p>
-                </div>
-              )}
             </div>
 
             {/* Modal Footer */}

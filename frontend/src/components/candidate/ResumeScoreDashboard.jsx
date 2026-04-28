@@ -16,15 +16,16 @@ export const ResumeScoreDashboard = ({ resumeScore = null, scoreCard = null }) =
     );
   }
 
-  // Calculate score percentages for proper display
-  const atsScore = Math.round(resumeScore.final_score || 0);
-  const sectionScore = Math.round(resumeScore.dimension_scores?.structure || 0);
-  const keywordScore = Math.round(resumeScore.dimension_scores?.market_demand || 0);
-  const formatScore = Math.round(resumeScore.dimension_scores?.evidence || 0);
-
-  // Calculate resume score as percentage of total (30% of 100)
-  // Formula: (ATS Score / 100) * 30 = Resume Contribution (0-30)
-  const resumeScorePercentage = Math.round((atsScore / 100) * 30);
+  // ✅ PHASE 2: Extract all 5 KPI component scores from backend ats_breakdown (0-100 each)
+  const atsScore = Math.round(resumeScore.ats_breakdown?.ats_score || resumeScore.final_score || 0);
+  const sectionScore = Math.round(resumeScore.ats_breakdown?.section_score || 0);
+  const keywordScore = Math.round(resumeScore.ats_breakdown?.keyword_score || 0);
+  const formatScore = Math.round(resumeScore.ats_breakdown?.format_score || 0);
+  const skillScore = Math.round(resumeScore.ats_breakdown?.skill_score || 0);
+  const projectStrength = Math.round(resumeScore.ats_breakdown?.project_strength || 0);
+  
+  // ✅ FIXED: Resume contribution (ATS × 0.3 = 0-30)
+  const resumeScorePercentage = resumeScore.ats_breakdown?.resume_contribution || Math.round((atsScore / 100) * 30);
 
   // Determine signal strength labels
   const getSignalLabel = (score) => {
@@ -39,13 +40,14 @@ export const ResumeScoreDashboard = ({ resumeScore = null, scoreCard = null }) =
     return 'bg-red-500';
   };
 
-  // Sample spider chart data (in real implementation, calculate from actual metrics)
-  const spiderData = [
-    { label: 'Experience', value: Math.min((sectionScore / 100 * 100), 100) },
-    { label: 'Skills', value: Math.min((keywordScore / 100 * 100), 100) },
-    { label: 'Education', value: Math.min((formatScore / 100 * 100), 100) },
-    { label: 'Clarity', value: Math.min((atsScore / 100 * 100), 100) },
-    { label: 'Quality', value: Math.min((sectionScore / 100 * 100), 100) }
+  // ✅ FIXED: Profile balance radar - uses real backend metrics (not hardcoded)
+  // Calculate based on actual section presence and KPI scores
+  const radarData = [
+    { label: 'Section Completeness', value: sectionScore },
+    { label: 'Keyword Relevance', value: keywordScore },
+    { label: 'Format Quality', value: formatScore },
+    { label: 'Skill Depth', value: skillScore },
+    { label: 'Project Strength', value: projectStrength }
   ];
 
   return (
@@ -59,29 +61,43 @@ export const ResumeScoreDashboard = ({ resumeScore = null, scoreCard = null }) =
       </div>
 
       <div className="p-8">
-        {/* KPI Analysis Section - Top */}
+        {/* KPI Analysis Section - 5 Components */}
         <div className="mb-8">
           <h4 className="font-semibold text-slate-900 mb-4">KPI Analysis</h4>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+            {/* ATS Score */}
             <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-4 border border-blue-200">
               <p className="text-xs font-medium text-blue-600 mb-1">ATS Score</p>
               <p className="text-3xl font-bold text-blue-900">{atsScore}</p>
               <p className="text-xs text-blue-700 mt-2">Out of 100</p>
             </div>
+
+            {/* Section Score */}
             <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-lg p-4 border border-green-200">
               <p className="text-xs font-medium text-green-600 mb-1">Section Score</p>
               <p className="text-3xl font-bold text-green-900">{sectionScore}</p>
               <p className="text-xs text-green-700 mt-2">/100</p>
             </div>
+
+            {/* Keyword Score */}
             <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg p-4 border border-purple-200">
               <p className="text-xs font-medium text-purple-600 mb-1">Keyword Score</p>
               <p className="text-3xl font-bold text-purple-900">{keywordScore}</p>
               <p className="text-xs text-purple-700 mt-2">/100</p>
             </div>
+
+            {/* Format Score */}
             <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-lg p-4 border border-orange-200">
               <p className="text-xs font-medium text-orange-600 mb-1">Format Score</p>
               <p className="text-3xl font-bold text-orange-900">{formatScore}</p>
               <p className="text-xs text-orange-700 mt-2">/100</p>
+            </div>
+
+            {/* Skill Score */}
+            <div className="bg-gradient-to-br from-cyan-50 to-cyan-100 rounded-lg p-4 border border-cyan-200">
+              <p className="text-xs font-medium text-cyan-600 mb-1">Skill Score</p>
+              <p className="text-3xl font-bold text-cyan-900">{skillScore}</p>
+              <p className="text-xs text-cyan-700 mt-2">/100</p>
             </div>
           </div>
         </div>
@@ -105,33 +121,9 @@ export const ResumeScoreDashboard = ({ resumeScore = null, scoreCard = null }) =
           </div>
         )}
 
-        {/* Main Grid - Section Analysis, ATS Breakdown, Signal Strength */}
-        <div className="grid md:grid-cols-3 gap-6 mb-8">
-          {/* Left Column - Section Analysis */}
-          <div className="bg-slate-50 rounded-lg border border-slate-200 p-6">
-            <h4 className="font-semibold text-slate-900 mb-4">Section Analysis</h4>
-            <div className="space-y-3">
-              {resumeScore.section_presence && Object.entries(resumeScore.section_presence).map(([section, present]) => (
-                <div key={section} className="flex justify-between items-center">
-                  <span className="text-sm capitalize text-slate-700 font-medium">{section.replace('_', ' ')}</span>
-                  <span
-                    className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                      present
-                        ? 'bg-green-100 text-green-700'
-                        : 'bg-red-100 text-red-700'
-                    }`}
-                  >
-                    {present ? '✓ Present' : '✗ Missing'}
-                  </span>
-                </div>
-              ))}
-            </div>
-            <p className="text-xs text-slate-500 mt-4 italic">
-              Add missing sections to improve your ATS score
-            </p>
-          </div>
-
-          {/* Middle Column - ATS Score Breakdown Pie Chart */}
+        {/* Main Grid - ATS Breakdown, Signal Strength */}
+        <div className="grid md:grid-cols-2 gap-6 mb-8">
+          {/* Left Column - ATS Score Breakdown Donut Chart */}
           <div className="bg-slate-50 rounded-lg border border-slate-200 p-6">
             <h4 className="font-semibold text-slate-900 mb-4">ATS Score Breakdown</h4>
             <div className="flex justify-center mb-6">
@@ -160,23 +152,31 @@ export const ResumeScoreDashboard = ({ resumeScore = null, scoreCard = null }) =
                   />
                 </svg>
                 <div className="absolute inset-0 flex flex-col items-center justify-center">
-                  <span className="text-2xl font-bold text-slate-900">{atsScore}%</span>
-                  <span className="text-xs text-slate-500">Score</span>
+                  <span className="text-2xl font-bold text-slate-900">{atsScore}</span>
+                  <span className="text-xs text-slate-500">/ 100</span>
                 </div>
               </div>
             </div>
             <div className="space-y-2 text-sm">
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 rounded-full bg-green-500"></div>
-                <span className="text-slate-700">Section: {sectionScore}%</span>
+                <span className="text-slate-700">Section: {sectionScore}</span>
               </div>
               <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-blue-500"></div>
-                <span className="text-slate-700">Keywords: {keywordScore}%</span>
+                <div className="w-3 h-3 rounded-full bg-purple-500"></div>
+                <span className="text-slate-700">Keyword: {keywordScore}</span>
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 rounded-full bg-orange-500"></div>
-                <span className="text-slate-700">Format: {formatScore}%</span>
+                <span className="text-slate-700">Format: {formatScore}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-cyan-500"></div>
+                <span className="text-slate-700">Skills: {skillScore}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-teal-500"></div>
+                <span className="text-slate-700">Projects: {projectStrength}</span>
               </div>
             </div>
           </div>
@@ -185,6 +185,7 @@ export const ResumeScoreDashboard = ({ resumeScore = null, scoreCard = null }) =
           <div className="bg-slate-50 rounded-lg border border-slate-200 p-6">
             <h4 className="font-semibold text-slate-900 mb-4">Signal Strength</h4>
             <div className="space-y-4">
+              {/* ✅ FIXED: Use backend KPI scores directly */}
               <div>
                 <div className="flex justify-between mb-2">
                   <span className="text-sm font-medium text-slate-700">Section Completeness</span>
@@ -198,6 +199,7 @@ export const ResumeScoreDashboard = ({ resumeScore = null, scoreCard = null }) =
                 </div>
                 <p className="text-xs text-slate-500 mt-1">{getSignalLabel(sectionScore)}</p>
               </div>
+
               <div>
                 <div className="flex justify-between mb-2">
                   <span className="text-sm font-medium text-slate-700">Keyword Density</span>
@@ -211,6 +213,7 @@ export const ResumeScoreDashboard = ({ resumeScore = null, scoreCard = null }) =
                 </div>
                 <p className="text-xs text-slate-500 mt-1">{getSignalLabel(keywordScore)}</p>
               </div>
+
               <div>
                 <div className="flex justify-between mb-2">
                   <span className="text-sm font-medium text-slate-700">Format Quality</span>
@@ -224,28 +227,57 @@ export const ResumeScoreDashboard = ({ resumeScore = null, scoreCard = null }) =
                 </div>
                 <p className="text-xs text-slate-500 mt-1">{getSignalLabel(formatScore)}</p>
               </div>
+
+              <div>
+                <div className="flex justify-between mb-2">
+                  <span className="text-sm font-medium text-slate-700">Skill Depth</span>
+                  <span className="text-sm font-semibold text-slate-900">{skillScore}%</span>
+                </div>
+                <div className="w-full bg-slate-300 rounded-full h-2 overflow-hidden">
+                  <div
+                    className={`h-2 rounded-full transition-all ${getSignalColor(skillScore)}`}
+                    style={{ width: `${Math.min(skillScore, 100)}%` }}
+                  ></div>
+                </div>
+                <p className="text-xs text-slate-500 mt-1">{getSignalLabel(skillScore)}</p>
+              </div>
+
+              <div>
+                <div className="flex justify-between mb-2">
+                  <span className="text-sm font-medium text-slate-700">Project Strength</span>
+                  <span className="text-sm font-semibold text-slate-900">{projectStrength}%</span>
+                </div>
+                <div className="w-full bg-slate-300 rounded-full h-2 overflow-hidden">
+                  <div
+                    className={`h-2 rounded-full transition-all ${getSignalColor(projectStrength)}`}
+                    style={{ width: `${Math.min(projectStrength, 100)}%` }}
+                  ></div>
+                </div>
+                <p className="text-xs text-slate-500 mt-1">{getSignalLabel(projectStrength)}</p>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Profile Balance - Spider Chart */}
-        <div className="bg-slate-50 rounded-lg border border-slate-200 p-6">
-          <h4 className="font-semibold text-slate-900 mb-4">Profile Balance</h4>
+        {/* Profile Balance - Radar Chart */}
+        <div className="bg-slate-50 rounded-lg border border-slate-200 p-6 mb-8">
+          <h4 className="font-semibold text-slate-900 mb-4">Profile Balance (Radar Chart)</h4>
           <div className="flex justify-center">
-            <svg width="280" height="280" viewBox="0 0 280 280">
-              {/* Pentagon grid lines */}
+            <svg width="320" height="320" viewBox="0 0 280 280" className="mx-auto">
+              {/* Grid lines */}
               {[1, 2, 3, 4, 5].map((level) => {
-                const points = spiderData.map((_, i) => {
-                  const angle = (i * (360 / spiderData.length) - 90) * (Math.PI / 180);
-                  const r = (level / 5) * 100;
+                const angleSlice = (Math.PI * 2) / radarData.length;
+                const points = radarData.map((_, i) => {
+                  const angle = angleSlice * i - Math.PI / 2;
+                  const r = ((level) / 5) * 100;
                   const x = 140 + r * Math.cos(angle);
                   const y = 140 + r * Math.sin(angle);
                   return `${x},${y}`;
-                });
+                }).join(' ');
                 return (
                   <polygon
                     key={`grid-${level}`}
-                    points={points.join(' ')}
+                    points={points}
                     fill="none"
                     stroke="#cbd5e1"
                     strokeWidth="1"
@@ -253,11 +285,53 @@ export const ResumeScoreDashboard = ({ resumeScore = null, scoreCard = null }) =
                 );
               })}
 
-              {/* Axis labels */}
-              {spiderData.map((data, i) => {
-                const angle = (i * (360 / spiderData.length) - 90) * (Math.PI / 180);
-                const x = 140 + 125 * Math.cos(angle);
-                const y = 140 + 125 * Math.sin(angle);
+              {/* Axis lines */}
+              {radarData.map((_, i) => {
+                const angleSlice = (Math.PI * 2) / radarData.length;
+                const angle = angleSlice * i - Math.PI / 2;
+                const x = 140 + 100 * Math.cos(angle);
+                const y = 140 + 100 * Math.sin(angle);
+                return (
+                  <line
+                    key={`axis-${i}`}
+                    x1={140}
+                    y1={140}
+                    x2={x}
+                    y2={y}
+                    stroke="#cbd5e1"
+                    strokeWidth="1"
+                  />
+                );
+              })}
+
+              {/* Data polygon */}
+              {(() => {
+                const angleSlice = (Math.PI * 2) / radarData.length;
+                const points = radarData.map((data, i) => {
+                  const angle = angleSlice * i - Math.PI / 2;
+                  const r = (data.value / 100) * 100;
+                  const x = 140 + r * Math.cos(angle);
+                  const y = 140 + r * Math.sin(angle);
+                  return `${x},${y}`;
+                }).join(' ');
+                return (
+                  <polygon
+                    points={points}
+                    fill="#0d9488"
+                    fillOpacity="0.2"
+                    stroke="#0d9488"
+                    strokeWidth="2"
+                  />
+                );
+              })()}
+
+              {/* Labels */}
+              {radarData.map((data, i) => {
+                const angleSlice = (Math.PI * 2) / radarData.length;
+                const angle = angleSlice * i - Math.PI / 2;
+                const r = 125;
+                const x = 140 + r * Math.cos(angle);
+                const y = 140 + r * Math.sin(angle);
                 return (
                   <text
                     key={`label-${i}`}
@@ -271,41 +345,34 @@ export const ResumeScoreDashboard = ({ resumeScore = null, scoreCard = null }) =
                   </text>
                 );
               })}
-
-              {/* Data polygon */}
-              <polygon
-                points={spiderData
-                  .map((data, i) => {
-                    const angle = (i * (360 / spiderData.length) - 90) * (Math.PI / 180);
-                    const r = (data.value / 100) * 100;
-                    const x = 140 + r * Math.cos(angle);
-                    const y = 140 + r * Math.sin(angle);
-                    return `${x},${y}`;
-                  })
-                  .join(' ')}
-                fill="#3b82f6"
-                fillOpacity="0.2"
-                stroke="#3b82f6"
-                strokeWidth="2"
-              />
             </svg>
           </div>
           <p className="text-xs text-slate-500 text-center mt-4">
-            Overall profile balance across key metrics
+            Overall profile balance across all 5 KPI metrics
           </p>
         </div>
 
-        {/* Improvement Suggestions */}
+        {/* ✅ FIXED: Improvement Suggestions - Uses backend suggestions only */}
         {resumeScore.improvement_suggestions && resumeScore.improvement_suggestions.length > 0 && (
-          <div className="mt-8 bg-blue-50 border border-blue-200 rounded-lg p-6">
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
             <h4 className="font-semibold text-blue-900 mb-4">💡 Improvement Suggestions</h4>
             <ul className="space-y-2">
-              {resumeScore.improvement_suggestions.slice(0, 5).map((suggestion, idx) => (
+              {resumeScore.improvement_suggestions.map((suggestion, idx) => (
                 <li key={idx} className="text-sm text-blue-800">
                   <span className="font-medium">• {suggestion}</span>
                 </li>
               ))}
             </ul>
+          </div>
+        )}
+        
+        {/* When no suggestions */}
+        {(!resumeScore.improvement_suggestions || resumeScore.improvement_suggestions.length === 0) && (
+          <div className="bg-green-50 border border-green-200 rounded-lg p-6">
+            <h4 className="font-semibold text-green-900 mb-2">✓ Resume Analysis Complete</h4>
+            <p className="text-sm text-green-800">
+              Your resume has been analyzed. Check the KPI cards and section analysis above for detailed metrics.
+            </p>
           </div>
         )}
       </div>

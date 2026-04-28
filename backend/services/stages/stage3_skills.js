@@ -5,10 +5,15 @@
  */
 
 const skillGraph = require('../data/skillGraph');
+const { createSafeWordBoundaryRegex } = require('../../utils/regexEscape');
 
 function stage3_skills(parseResult, sectionResult) {
   const text = parseResult.raw_text.toLowerCase();
   const sections = sectionResult.sections;
+
+  // ✅ FIXED: sectionResult.sections now includes remapped LANGUAGES→SKILLS
+  // This ensures skill extraction works correctly even if resume uses "Languages:" for technical skills
+  console.log(`[Stage 3] Skills extraction from sections:`, Object.keys(sections).filter(k => sections[k]));
 
   // Extracted skills with metadata
   const skillsDetected = new Set();
@@ -21,8 +26,8 @@ function stage3_skills(parseResult, sectionResult) {
     const allVariations = [canonical.toLowerCase(), ...aliases];
     
     for (const variation of allVariations) {
-      // Create word-boundary regex
-      const pattern = new RegExp(`\\b${variation}\\b`, 'gi');
+      // ✅ FIXED: Use safe regex that escapes special characters (C++, C#, Node.js, etc.)
+      const pattern = createSafeWordBoundaryRegex(variation, 'gi');
       
       if (pattern.test(text)) {
         skillsDetected.add(canonical);
@@ -37,7 +42,8 @@ function stage3_skills(parseResult, sectionResult) {
           if (!sectionContent) continue;
           
           const sectionText = sectionContent.toLowerCase();
-          const sectionPattern = new RegExp(`\\b${variation}\\b`, 'gi');
+          // ✅ FIXED: Use safe regex for section matching too
+          const sectionPattern = createSafeWordBoundaryRegex(variation, 'gi');
           const matches = sectionText.match(sectionPattern);
           
           if (matches) {
