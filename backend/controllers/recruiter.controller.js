@@ -197,12 +197,37 @@ exports.getCandidateById = async (req, res) => {
         skills: candidateObj.skills_score || 0,
         projects: candidateObj.projects_score || 0
       },
-      // Add resume score details
+      // ✅ FIXED: Add resume score details with KPI data for recruiter ATS dashboard
       resumeScoreDetails: resumeScore ? {
+        // Old fields (for backward compatibility)
         final_score: resumeScore.final_score || 0,
         detected_role: resumeScore.detected_role || 'Unknown',
         dimensions: resumeScore.dimension_scores || {},
-        penalties: resumeScore.penalties_applied || {}
+        penalties: resumeScore.penalties_applied || {},
+        // ✅ NEW: KPI data for clean recruiter dashboard (camelCase)
+        atsScore: resumeScore.ats_breakdown?.ats_score || resumeScore.final_score || 0,
+        sectionScore: resumeScore.ats_breakdown?.section_score || 0,
+        keywordScore: resumeScore.ats_breakdown?.keyword_score || 0,
+        formatScore: resumeScore.ats_breakdown?.format_score || 0,
+        skillScore: resumeScore.ats_breakdown?.skill_score || 0,
+        projectStrength: resumeScore.ats_breakdown?.project_strength || 0,
+        resumeContribution: resumeScore.ats_breakdown?.resume_contribution || 0,
+        sectionPresence: resumeScore.section_presence || {
+          summary: false,
+          experience: false,
+          education: false,
+          skills: false,
+          projects: false,
+          certifications: false
+        },
+        // Profile balance radar data (based on KPI scores)
+        profileBalance: {
+          sectionCompleteness: resumeScore.ats_breakdown?.section_score || 0,
+          keywordRelevance: resumeScore.ats_breakdown?.keyword_score || 0,
+          formatQuality: resumeScore.ats_breakdown?.format_score || 0,
+          skillDepth: resumeScore.ats_breakdown?.skill_score || 0,
+          projectStrength: resumeScore.ats_breakdown?.project_strength || 0
+        }
       } : null,
       // Add projects
       projects: projects.map(p => ({
@@ -570,7 +595,9 @@ exports.getActivity = async (req, res) => {
     }
 
     // Get recent views (sorted by date)
+    // ✅ Filter out deleted candidates (candidate_id = null)
     const recentViews = recruiter.viewed_profiles
+      .filter(view => view.candidate_id !== null)  // Skip deleted candidates
       .sort((a, b) => new Date(b.viewed_at) - new Date(a.viewed_at))
       .map(view => ({
         action: 'viewed',
@@ -584,7 +611,9 @@ exports.getActivity = async (req, res) => {
       }));
 
     // Get recent stars (sorted by updatedAt)
+    // ✅ Filter out deleted candidates
     const recentStars = recruiter.starred
+      .filter(candidate => candidate !== null)  // Skip deleted candidates
       .map(candidate => ({
         action: 'starred',
         candidate: {

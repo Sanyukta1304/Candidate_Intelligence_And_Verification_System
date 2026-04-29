@@ -428,129 +428,337 @@ const RecruiterCandidateViewPage = () => {
           <div className="space-y-8">
             {candidate.resumeScoreDetails ? (
               <>
-                {/* Top Metrics Row */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <Card className="p-4">
-                    <p className="text-xs text-slate-600 font-medium mb-1">Final Score</p>
-                    <p className="text-3xl font-bold text-slate-900">{candidate.resumeScoreDetails.final_score || 0}/100</p>
-                  </Card>
-                  <Card className="p-4">
-                    <p className="text-xs text-slate-600 font-medium mb-1">Structure</p>
-                    <p className="text-3xl font-bold text-slate-900">{Math.round(candidate.resumeScoreDetails.dimensions?.structure || 0)}/100</p>
-                  </Card>
-                  <Card className="p-4">
-                    <p className="text-xs text-slate-600 font-medium mb-1">Market Demand</p>
-                    <p className="text-3xl font-bold text-slate-900">{Math.round(candidate.resumeScoreDetails.dimensions?.market_demand || 0)}/100</p>
-                  </Card>
-                  <Card className="p-4">
-                    <p className="text-xs text-slate-600 font-medium mb-1">Skill Depth</p>
-                    <p className="text-3xl font-bold text-slate-900">{Math.round(candidate.resumeScoreDetails.dimensions?.skill_depth || 0)}/100</p>
-                  </Card>
-                </div>
-
-                {/* Two Column: Section Analysis + ATS Breakdown */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                  {/* Left: Dimension Scores */}
-                  <Card className="p-8">
-                    <h3 className="text-lg font-semibold text-slate-900 mb-6">DIMENSION SCORES</h3>
-                    <div className="space-y-5">
-                      {candidate.resumeScoreDetails.dimensions && Object.entries(candidate.resumeScoreDetails.dimensions).map(([key, value]) => (
-                        <div key={key}>
-                          <div className="flex items-center justify-between mb-2">
-                            <p className="text-slate-900 font-medium text-sm capitalize">{key.replace(/_/g, ' ')}</p>
-                            <span className="text-slate-900 font-bold text-sm">{Math.round(value || 0)}/100</span>
-                          </div>
-                          <div className="w-full bg-slate-200 rounded-full h-2">
-                            <div
-                              className="bg-blue-500 h-full rounded-full"
-                              style={{ width: `${Math.min(value || 0, 100)}%` }}
-                            />
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </Card>
-
-                  {/* Right: Penalties Applied */}
-                  <Card className="p-8">
-                    <h3 className="text-lg font-semibold text-slate-900 mb-6">PENALTIES APPLIED</h3>
-                    <div className="space-y-4">
-                      {candidate.resumeScoreDetails.penalties && Object.entries(candidate.resumeScoreDetails.penalties).length > 0 ? (
-                        Object.entries(candidate.resumeScoreDetails.penalties).map(([key, value]) => {
-                          if (key === 'total') return null; // Skip total in the list
-                          return (
-                            <div key={key} className="flex items-center justify-between pb-3 border-b border-slate-100">
-                              <p className="text-slate-900 font-medium text-sm capitalize">{key.replace(/_/g, ' ')}</p>
-                              <span className={`font-bold text-sm ${value > 0 ? 'text-red-600' : 'text-green-600'}`}>
-                                {value > 0 ? `-${Math.round(value)}` : '✓'}
-                              </span>
-                            </div>
-                          );
-                        })
-                      ) : (
-                        <div className="text-center py-8">
-                          <p className="text-green-600 font-medium">✓ No penalties applied</p>
-                        </div>
-                      )}
-                      {candidate.resumeScoreDetails.penalties?.total > 0 && (
-                        <div className="border-t border-slate-200 pt-4">
-                          <div className="flex items-center justify-between">
-                            <p className="text-slate-900 font-semibold">Total Penalties</p>
-                            <span className="text-red-600 font-bold">-{Math.round(candidate.resumeScoreDetails.penalties.total)}</span>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </Card>
-                </div>
-
-                {/* Resume Info & Contribution */}
-                <Card className="p-8">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                    {/* Left: Detected Role */}
-                    <div>
-                      <p className="text-sm text-slate-600 font-medium mb-2">DETECTED ROLE</p>
-                      <p className="text-2xl font-bold text-slate-900">{candidate.resumeScoreDetails.detected_role || 'Unknown'}</p>
-                      <p className="text-xs text-slate-600 mt-2">Identified based on resume content analysis</p>
+                {/* KPI Analysis Section - 5 Components */}
+                <div className="bg-white rounded-xl border border-slate-200 shadow-soft-lg p-8">
+                  <h3 className="text-lg font-semibold text-primary-dark mb-4">KPI Analysis</h3>
+                  <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                    {/* ATS Score */}
+                    <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-4 border border-blue-200">
+                      <p className="text-xs font-medium text-blue-600 mb-1">ATS Score</p>
+                      <p className="text-3xl font-bold text-blue-900">{Math.round(candidate.resumeScoreDetails.atsScore || 0)}</p>
+                      <p className="text-xs text-blue-700 mt-2">Out of 100</p>
                     </div>
 
-                    {/* Center: Resume Contribution */}
-                    <div className="flex flex-col justify-center">
-                      <p className="text-sm text-slate-600 font-medium mb-2">CONTRIBUTION TO SCORE</p>
-                      <div className="flex items-baseline gap-2">
-                        <p className="text-4xl font-bold text-slate-900">{candidate.scoreBreakdown?.resume || 0}</p>
-                        <p className="text-lg text-slate-600">/30</p>
-                      </div>
-                      <p className="text-xs text-slate-600 mt-2">
-                        {Math.round((candidate.scoreBreakdown?.resume || 0) / 30 * 100)}% of total score
-                      </p>
+                    {/* Section Score */}
+                    <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-lg p-4 border border-green-200">
+                      <p className="text-xs font-medium text-green-600 mb-1">Section Score</p>
+                      <p className="text-3xl font-bold text-green-900">{Math.round(candidate.resumeScoreDetails.sectionScore || 0)}</p>
+                      <p className="text-xs text-green-700 mt-2">/100</p>
                     </div>
 
-                    {/* Right: File Info */}
-                    <div>
-                      <p className="text-sm text-slate-600 font-medium mb-2">RESUME FILE</p>
-                      <p className="text-slate-900 font-medium text-sm break-all">{candidate.resume_url || 'Not uploaded'}</p>
-                      {candidate.resume_url && (
-                        <button
-                          onClick={handleDownloadResume}
-                          className="mt-3 px-3 py-1.5 bg-blue-600 text-white rounded text-xs font-medium hover:bg-blue-700"
-                        >
-                          ↓ Download
-                        </button>
-                      )}
+                    {/* Keyword Score */}
+                    <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg p-4 border border-purple-200">
+                      <p className="text-xs font-medium text-purple-600 mb-1">Keyword Score</p>
+                      <p className="text-3xl font-bold text-purple-900">{Math.round(candidate.resumeScoreDetails.keywordScore || 0)}</p>
+                      <p className="text-xs text-purple-700 mt-2">/100</p>
+                    </div>
+
+                    {/* Format Score */}
+                    <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-lg p-4 border border-orange-200">
+                      <p className="text-xs font-medium text-orange-600 mb-1">Format Score</p>
+                      <p className="text-3xl font-bold text-orange-900">{Math.round(candidate.resumeScoreDetails.formatScore || 0)}</p>
+                      <p className="text-xs text-orange-700 mt-2">/100</p>
+                    </div>
+
+                    {/* Skill Score */}
+                    <div className="bg-gradient-to-br from-cyan-50 to-cyan-100 rounded-lg p-4 border border-cyan-200">
+                      <p className="text-xs font-medium text-cyan-600 mb-1">Skill Score</p>
+                      <p className="text-3xl font-bold text-cyan-900">{Math.round(candidate.resumeScoreDetails.skillScore || 0)}</p>
+                      <p className="text-xs text-cyan-700 mt-2">/100</p>
                     </div>
                   </div>
-                </Card>
+                </div>
+
+                {/* Resume Score Contribution */}
+                <div className="bg-white rounded-xl border border-slate-200 shadow-soft-lg p-8">
+                  <div className="bg-slate-50 rounded-lg border border-slate-200 p-4">
+                    <div className="flex justify-between items-center mb-2">
+                      <p className="text-sm font-semibold text-slate-700">Resume Score Contribution</p>
+                      <p className="text-sm font-bold text-slate-900">{Math.round(candidate.resumeScoreDetails.resumeContribution || 0)}/30</p>
+                    </div>
+                    <div className="w-full bg-slate-200 rounded-full h-3">
+                      <div
+                        className="bg-gradient-to-r from-green-400 to-green-600 h-3 rounded-full transition-all"
+                        style={{ width: `${Math.min((candidate.resumeScoreDetails.resumeContribution || 0) / 30 * 100, 100)}%` }}
+                      ></div>
+                    </div>
+                    <p className="text-xs text-slate-500 mt-2">
+                      Out of 30% contribution to total profile score
+                    </p>
+                  </div>
+                </div>
+
+                {/* ATS Score Breakdown Donut Chart + Signal Strength */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                  {/* Left: ATS Score Breakdown */}
+                  <div className="bg-white rounded-xl border border-slate-200 shadow-soft-lg p-8">
+                    <h4 className="font-semibold text-slate-900 mb-6">ATS Score Breakdown</h4>
+                    <div className="flex justify-center mb-6">
+                      {/* Donut Chart */}
+                      <div className="relative w-40 h-40">
+                        <svg className="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
+                          {/* Background circle */}
+                          <circle
+                            cx="18"
+                            cy="18"
+                            r="15.915"
+                            fill="none"
+                            stroke="#e2e8f0"
+                            strokeWidth="2.5"
+                          />
+                          {/* Score circle */}
+                          <circle
+                            cx="18"
+                            cy="18"
+                            r="15.915"
+                            fill="none"
+                            stroke="#10b981"
+                            strokeWidth="2.5"
+                            strokeDasharray={`${((candidate.resumeScoreDetails.atsScore || 0) / 100) * 100}, 100`}
+                            strokeLinecap="round"
+                          />
+                        </svg>
+                        <div className="absolute inset-0 flex flex-col items-center justify-center">
+                          <span className="text-2xl font-bold text-slate-900">{Math.round(candidate.resumeScoreDetails.atsScore || 0)}</span>
+                          <span className="text-xs text-slate-500">/ 100</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex items-center gap-2">
+                        <div className="w-3 h-3 rounded-full bg-green-500"></div>
+                        <span className="text-slate-700">Section: {Math.round(candidate.resumeScoreDetails.sectionScore || 0)}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="w-3 h-3 rounded-full bg-purple-500"></div>
+                        <span className="text-slate-700">Keyword: {Math.round(candidate.resumeScoreDetails.keywordScore || 0)}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="w-3 h-3 rounded-full bg-orange-500"></div>
+                        <span className="text-slate-700">Format: {Math.round(candidate.resumeScoreDetails.formatScore || 0)}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="w-3 h-3 rounded-full bg-cyan-500"></div>
+                        <span className="text-slate-700">Skills: {Math.round(candidate.resumeScoreDetails.skillScore || 0)}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="w-3 h-3 rounded-full bg-teal-500"></div>
+                        <span className="text-slate-700">Projects: {Math.round(candidate.resumeScoreDetails.projectStrength || 0)}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Right: Signal Strength */}
+                  <div className="bg-white rounded-xl border border-slate-200 shadow-soft-lg p-8">
+                    <h4 className="font-semibold text-slate-900 mb-6">Signal Strength</h4>
+                    <div className="space-y-4">
+                      {/* Section Completeness */}
+                      <div>
+                        <div className="flex justify-between mb-2">
+                          <span className="text-sm font-medium text-slate-700">Section Completeness</span>
+                          <span className="text-sm font-semibold text-slate-900">{Math.round(candidate.resumeScoreDetails.sectionScore || 0)}%</span>
+                        </div>
+                        <div className="w-full bg-slate-300 rounded-full h-2 overflow-hidden">
+                          <div
+                            className="h-2 rounded-full transition-all bg-green-500"
+                            style={{ width: `${Math.min(candidate.resumeScoreDetails.sectionScore || 0, 100)}%` }}
+                          ></div>
+                        </div>
+                      </div>
+
+                      {/* Keyword Density */}
+                      <div>
+                        <div className="flex justify-between mb-2">
+                          <span className="text-sm font-medium text-slate-700">Keyword Density</span>
+                          <span className="text-sm font-semibold text-slate-900">{Math.round(candidate.resumeScoreDetails.keywordScore || 0)}%</span>
+                        </div>
+                        <div className="w-full bg-slate-300 rounded-full h-2 overflow-hidden">
+                          <div
+                            className="h-2 rounded-full transition-all bg-yellow-500"
+                            style={{ width: `${Math.min(candidate.resumeScoreDetails.keywordScore || 0, 100)}%` }}
+                          ></div>
+                        </div>
+                      </div>
+
+                      {/* Format Quality */}
+                      <div>
+                        <div className="flex justify-between mb-2">
+                          <span className="text-sm font-medium text-slate-700">Format Quality</span>
+                          <span className="text-sm font-semibold text-slate-900">{Math.round(candidate.resumeScoreDetails.formatScore || 0)}%</span>
+                        </div>
+                        <div className="w-full bg-slate-300 rounded-full h-2 overflow-hidden">
+                          <div
+                            className="h-2 rounded-full transition-all bg-blue-500"
+                            style={{ width: `${Math.min(candidate.resumeScoreDetails.formatScore || 0, 100)}%` }}
+                          ></div>
+                        </div>
+                      </div>
+
+                      {/* Skill Depth */}
+                      <div>
+                        <div className="flex justify-between mb-2">
+                          <span className="text-sm font-medium text-slate-700">Skill Depth</span>
+                          <span className="text-sm font-semibold text-slate-900">{Math.round(candidate.resumeScoreDetails.skillScore || 0)}%</span>
+                        </div>
+                        <div className="w-full bg-slate-300 rounded-full h-2 overflow-hidden">
+                          <div
+                            className="h-2 rounded-full transition-all bg-purple-500"
+                            style={{ width: `${Math.min(candidate.resumeScoreDetails.skillScore || 0, 100)}%` }}
+                          ></div>
+                        </div>
+                      </div>
+
+                      {/* Project Strength */}
+                      <div>
+                        <div className="flex justify-between mb-2">
+                          <span className="text-sm font-medium text-slate-700">Project Strength</span>
+                          <span className="text-sm font-semibold text-slate-900">{Math.round(candidate.resumeScoreDetails.projectStrength || 0)}%</span>
+                        </div>
+                        <div className="w-full bg-slate-300 rounded-full h-2 overflow-hidden">
+                          <div
+                            className="h-2 rounded-full transition-all bg-teal-500"
+                            style={{ width: `${Math.min(candidate.resumeScoreDetails.projectStrength || 0, 100)}%` }}
+                          ></div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Profile Balance - Radar Chart */}
+                <div className="bg-white rounded-xl border border-slate-200 shadow-soft-lg p-8">
+                  <h4 className="font-semibold text-slate-900 mb-4">Profile Balance (Radar Chart)</h4>
+                  <div className="flex justify-center overflow-x-auto">
+                    <svg width="380" height="380" viewBox="0 0 380 380" className="mx-auto">
+                      {/* Grid lines */}
+                      {[1, 2, 3, 4, 5].map((level) => {
+                        const radarData = [
+                          { label: 'Section Completeness', value: candidate.resumeScoreDetails.sectionScore || 0 },
+                          { label: 'Keyword Relevance', value: candidate.resumeScoreDetails.keywordScore || 0 },
+                          { label: 'Format Quality', value: candidate.resumeScoreDetails.formatScore || 0 },
+                          { label: 'Skill Depth', value: candidate.resumeScoreDetails.skillScore || 0 },
+                          { label: 'Project Strength', value: candidate.resumeScoreDetails.projectStrength || 0 }
+                        ];
+                        const angleSlice = (Math.PI * 2) / radarData.length;
+                        const points = radarData.map((_, i) => {
+                          const angle = angleSlice * i - Math.PI / 2;
+                          const r = ((level) / 5) * 100;
+                          const x = 190 + r * Math.cos(angle);
+                          const y = 190 + r * Math.sin(angle);
+                          return `${x},${y}`;
+                        }).join(' ');
+                        return (
+                          <polygon
+                            key={`grid-${level}`}
+                            points={points}
+                            fill="none"
+                            stroke="#cbd5e1"
+                            strokeWidth="1"
+                          />
+                        );
+                      })}
+
+                      {/* Axis lines */}
+                      {(() => {
+                        const radarData = [
+                          { label: 'Section Completeness', value: candidate.resumeScoreDetails.sectionScore || 0 },
+                          { label: 'Keyword Relevance', value: candidate.resumeScoreDetails.keywordScore || 0 },
+                          { label: 'Format Quality', value: candidate.resumeScoreDetails.formatScore || 0 },
+                          { label: 'Skill Depth', value: candidate.resumeScoreDetails.skillScore || 0 },
+                          { label: 'Project Strength', value: candidate.resumeScoreDetails.projectStrength || 0 }
+                        ];
+                        return radarData.map((_, i) => {
+                          const angleSlice = (Math.PI * 2) / radarData.length;
+                          const angle = angleSlice * i - Math.PI / 2;
+                          const x = 190 + 100 * Math.cos(angle);
+                          const y = 190 + 100 * Math.sin(angle);
+                          return (
+                            <line
+                              key={`axis-${i}`}
+                              x1={190}
+                              y1={190}
+                              x2={x}
+                              y2={y}
+                              stroke="#cbd5e1"
+                              strokeWidth="1"
+                            />
+                          );
+                        });
+                      })()}
+
+                      {/* Data polygon */}
+                      {(() => {
+                        const radarData = [
+                          { label: 'Section Completeness', value: candidate.resumeScoreDetails.sectionScore || 0 },
+                          { label: 'Keyword Relevance', value: candidate.resumeScoreDetails.keywordScore || 0 },
+                          { label: 'Format Quality', value: candidate.resumeScoreDetails.formatScore || 0 },
+                          { label: 'Skill Depth', value: candidate.resumeScoreDetails.skillScore || 0 },
+                          { label: 'Project Strength', value: candidate.resumeScoreDetails.projectStrength || 0 }
+                        ];
+                        const angleSlice = (Math.PI * 2) / radarData.length;
+                        const points = radarData.map((data, i) => {
+                          const angle = angleSlice * i - Math.PI / 2;
+                          const r = (data.value / 100) * 100;
+                          const x = 190 + r * Math.cos(angle);
+                          const y = 190 + r * Math.sin(angle);
+                          return `${x},${y}`;
+                        }).join(' ');
+                        return (
+                          <polygon
+                            points={points}
+                            fill="#0d9488"
+                            fillOpacity="0.2"
+                            stroke="#0d9488"
+                            strokeWidth="2"
+                          />
+                        );
+                      })()}
+
+                      {/* Labels */}
+                      {(() => {
+                        const radarData = [
+                          { label: 'Section Completeness', value: candidate.resumeScoreDetails.sectionScore || 0 },
+                          { label: 'Keyword Relevance', value: candidate.resumeScoreDetails.keywordScore || 0 },
+                          { label: 'Format Quality', value: candidate.resumeScoreDetails.formatScore || 0 },
+                          { label: 'Skill Depth', value: candidate.resumeScoreDetails.skillScore || 0 },
+                          { label: 'Project Strength', value: candidate.resumeScoreDetails.projectStrength || 0 }
+                        ];
+                        return radarData.map((data, i) => {
+                          const angleSlice = (Math.PI * 2) / radarData.length;
+                          const angle = angleSlice * i - Math.PI / 2;
+                          const r = 145;
+                          const x = 190 + r * Math.cos(angle);
+                          const y = 190 + r * Math.sin(angle);
+                          return (
+                            <text
+                              key={`label-${i}`}
+                              x={x}
+                              y={y}
+                              textAnchor="middle"
+                              dy="0.3em"
+                              className="text-xs font-medium fill-slate-700"
+                              style={{ fontSize: '11px' }}
+                            >
+                              {data.label}
+                            </text>
+                          );
+                        });
+                      })()}
+                    </svg>
+                  </div>
+                </div>
               </>
             ) : (
               <Card className="p-8 text-center">
                 <p className="text-slate-600">Resume scoring not available yet. Score the resume to see detailed analysis.</p>
-                <button
-                  onClick={handleDownloadResume}
-                  className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium"
-                >
-                  View Resume
-                </button>
+                {candidate.resume_url && (
+                  <button
+                    onClick={handleDownloadResume}
+                    className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium"
+                  >
+                    View Resume
+                  </button>
+                )}
               </Card>
             )}
           </div>

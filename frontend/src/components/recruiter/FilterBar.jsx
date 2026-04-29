@@ -45,7 +45,7 @@ export const FilterBar = ({
           </h3>
           <div className="space-y-3">
             <div className="flex gap-2">
-              {[60, 65, 70, 75, 80, 85, 90].map((score) => (
+              {[60, 65, 70, 75].map((score) => (
                 <button
                   key={score}
                   onClick={() => onMinScoreChange(score)}

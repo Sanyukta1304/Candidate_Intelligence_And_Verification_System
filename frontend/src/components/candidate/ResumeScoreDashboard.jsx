@@ -262,16 +262,16 @@ export const ResumeScoreDashboard = ({ resumeScore = null, scoreCard = null }) =
         {/* Profile Balance - Radar Chart */}
         <div className="bg-slate-50 rounded-lg border border-slate-200 p-6 mb-8">
           <h4 className="font-semibold text-slate-900 mb-4">Profile Balance (Radar Chart)</h4>
-          <div className="flex justify-center">
-            <svg width="320" height="320" viewBox="0 0 280 280" className="mx-auto">
+          <div className="flex justify-center overflow-x-auto">
+            <svg width="380" height="380" viewBox="0 0 380 380" className="mx-auto">
               {/* Grid lines */}
               {[1, 2, 3, 4, 5].map((level) => {
                 const angleSlice = (Math.PI * 2) / radarData.length;
                 const points = radarData.map((_, i) => {
                   const angle = angleSlice * i - Math.PI / 2;
                   const r = ((level) / 5) * 100;
-                  const x = 140 + r * Math.cos(angle);
-                  const y = 140 + r * Math.sin(angle);
+                  const x = 190 + r * Math.cos(angle);
+                  const y = 190 + r * Math.sin(angle);
                   return `${x},${y}`;
                 }).join(' ');
                 return (
@@ -289,13 +289,13 @@ export const ResumeScoreDashboard = ({ resumeScore = null, scoreCard = null }) =
               {radarData.map((_, i) => {
                 const angleSlice = (Math.PI * 2) / radarData.length;
                 const angle = angleSlice * i - Math.PI / 2;
-                const x = 140 + 100 * Math.cos(angle);
-                const y = 140 + 100 * Math.sin(angle);
+                const x = 190 + 100 * Math.cos(angle);
+                const y = 190 + 100 * Math.sin(angle);
                 return (
                   <line
                     key={`axis-${i}`}
-                    x1={140}
-                    y1={140}
+                    x1={190}
+                    y1={190}
                     x2={x}
                     y2={y}
                     stroke="#cbd5e1"
@@ -310,8 +310,8 @@ export const ResumeScoreDashboard = ({ resumeScore = null, scoreCard = null }) =
                 const points = radarData.map((data, i) => {
                   const angle = angleSlice * i - Math.PI / 2;
                   const r = (data.value / 100) * 100;
-                  const x = 140 + r * Math.cos(angle);
-                  const y = 140 + r * Math.sin(angle);
+                  const x = 190 + r * Math.cos(angle);
+                  const y = 190 + r * Math.sin(angle);
                   return `${x},${y}`;
                 }).join(' ');
                 return (
@@ -329,9 +329,9 @@ export const ResumeScoreDashboard = ({ resumeScore = null, scoreCard = null }) =
               {radarData.map((data, i) => {
                 const angleSlice = (Math.PI * 2) / radarData.length;
                 const angle = angleSlice * i - Math.PI / 2;
-                const r = 125;
-                const x = 140 + r * Math.cos(angle);
-                const y = 140 + r * Math.sin(angle);
+                const r = 145;
+                const x = 190 + r * Math.cos(angle);
+                const y = 190 + r * Math.sin(angle);
                 return (
                   <text
                     key={`label-${i}`}
@@ -340,6 +340,7 @@ export const ResumeScoreDashboard = ({ resumeScore = null, scoreCard = null }) =
                     textAnchor="middle"
                     dy="0.3em"
                     className="text-xs font-medium fill-slate-700"
+                    style={{ fontSize: '11px' }}
                   >
                     {data.label}
                   </text>
