@@ -3,11 +3,9 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { useTheme } from '../contexts/ThemeContext';
 
 export const Navbar = () => {
   const { isAuthenticated, user, logout } = useAuth();
-  const { isDark, toggleTheme } = useTheme();
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -20,7 +18,7 @@ export const Navbar = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="h-20 flex items-center justify-between">
           {/* Logo */}
-          <Link to="/" className="text-heading-3 font-bold text-white-primary flex-shrink-0">
+          <Link to="/" className="text-heading-3 font-bold flex-shrink-0" style={{ color: 'var(--color-navbar-text)' }}>
             CredVerify
           </Link>
 
@@ -29,27 +27,19 @@ export const Navbar = () => {
             <div className="flex items-center gap-2">
               <Link
                 to="/about"
-                className="nav-item text-white-primary hover:text-primary-teal transition"
+                className="nav-item hover:text-primary-teal transition"
+                style={{ color: 'var(--color-navbar-text)' }}
               >
                 About
               </Link>
 
               <Link
                 to="/login"
-                className="nav-item text-white-primary hover:text-primary-teal transition"
+                className="nav-item hover:text-primary-teal transition"
+                style={{ color: 'var(--color-navbar-text)' }}
               >
                 Login
               </Link>
-
-              {/* Theme Toggle Button */}
-              <button
-                onClick={toggleTheme}
-                className="theme-toggle-btn"
-                aria-label="Toggle theme"
-                title={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
-              >
-                {isDark ? '🌙' : '☀️'}
-              </button>
 
               <Link
                 to="/register"
@@ -59,11 +49,12 @@ export const Navbar = () => {
               </Link>
             </div>
           ) : (
-            <div className="flex items-center justify-end gap-2 w-full">
+            <div className="flex items-center justify-end gap-2 flex-1">
               {/* All Authenticated Navigation Items */}
               <Link
                 to="/dashboard"
-                className="nav-item text-white-primary hover:text-primary-teal transition"
+                className="nav-item hover:text-primary-teal transition"
+                style={{ color: 'var(--color-navbar-text)' }}
               >
                 Dashboard
               </Link>
@@ -72,14 +63,16 @@ export const Navbar = () => {
                 <>
                   <Link
                     to="/recruiter/search"
-                    className="nav-item text-white-primary hover:text-primary-teal transition"
+                    className="nav-item hover:text-primary-teal transition"
+                    style={{ color: 'var(--color-navbar-text)' }}
                   >
                     Search
                   </Link>
 
                   <Link
                     to="/recruiter/starred"
-                    className="nav-item text-white-primary hover:text-primary-teal transition"
+                    className="nav-item hover:text-primary-teal transition"
+                    style={{ color: 'var(--color-navbar-text)' }}
                   >
                     Starred
                   </Link>
@@ -89,7 +82,8 @@ export const Navbar = () => {
               {user?.role === 'candidate' && (
                 <Link
                   to="/notifications"
-                  className="nav-item text-white-primary hover:text-primary-teal transition"
+                  className="nav-item hover:text-primary-teal transition"
+                  style={{ color: 'var(--color-navbar-text)' }}
                 >
                   Notifications
                 </Link>
@@ -97,20 +91,11 @@ export const Navbar = () => {
 
               <Link
                 to={user?.role === 'recruiter' ? '/recruiter/profile' : '/profile'}
-                className="nav-item text-white-primary hover:text-primary-teal transition"
+                className="nav-item hover:text-primary-teal transition"
+                style={{ color: 'var(--color-navbar-text)' }}
               >
                 Profile
               </Link>
-
-              {/* Theme Toggle Button */}
-              <button
-                onClick={toggleTheme}
-                className="theme-toggle-btn"
-                aria-label="Toggle theme"
-                title={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
-              >
-                {isDark ? '🌙' : '☀️'}
-              </button>
 
               {/* Circular Profile Avatar */}
               <div className="flex items-center justify-center w-10 h-10 rounded-full bg-primary-teal text-white-primary font-semibold text-sm cursor-pointer hover:bg-teal-600 transition flex-shrink-0">
@@ -120,7 +105,8 @@ export const Navbar = () => {
               {/* Logout Button */}
               <button
                 onClick={handleLogout}
-                className="nav-item text-white-primary hover:text-primary-teal transition"
+                className="nav-item hover:text-primary-teal transition"
+                style={{ color: 'var(--color-navbar-text)' }}
               >
                 Log out
               </button>
