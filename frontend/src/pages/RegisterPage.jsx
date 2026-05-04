@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { authService } from '../api/authService';
+import { Footer } from '../components/Footer';
 
 export const RegisterPage = () => {
   const navigate = useNavigate();
@@ -50,10 +51,10 @@ export const RegisterPage = () => {
 
       register(response.user, response.token);
 
-      // role based redirect
+      // role based redirect - direct to dashboard, not profile
       const dashboardRoute =
         response.user.role === 'candidate'
-          ? '/candidate/profile'
+          ? '/candidate/dashboard'
           : '/recruiter/dashboard';
 
       navigate(dashboardRoute);
@@ -67,21 +68,22 @@ export const RegisterPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#F4F7FB] flex items-center justify-center px-4 py-12">
+    <div className="min-h-screen bg-grey-mild flex flex-col">
+      <div className="flex-grow flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-xl">
         {/* Card */}
-        <div className="bg-white border border-slate-200 rounded-3xl p-10 shadow-sm">
+        <div className="bg-white-primary border border-slate-300 rounded-card p-4 shadow-soft">
           {/* Header */}
           <div className="text-center mb-8">
-            <h1 className="text-4xl font-semibold text-black mb-3">
+            <h1 className="heading-2 text-primary-navy mb-3">
               Create your account
             </h1>
 
-            <p className="text-slate-600">
+            <p className="text-body text-slate-grey">
               Already have one?{' '}
               <Link
                 to="/login"
-                className="text-blue-600 font-medium hover:underline"
+                className="text-primary-teal font-bold hover:underline"
               >
                 Log in
               </Link>
@@ -90,8 +92,8 @@ export const RegisterPage = () => {
 
           {/* Error Message */}
           {error && (
-            <div className="mb-6 p-4 rounded-xl border border-red-200 bg-red-50">
-              <p className="text-sm text-red-700">{error}</p>
+            <div className="mb-6 p-4 rounded-button border border-status-error bg-status-error">
+              <p className="text-caption text-status-error-text">{error}</p>
             </div>
           )}
 
@@ -105,7 +107,7 @@ export const RegisterPage = () => {
               onChange={handleChange}
               placeholder="Full name"
               required
-              className="w-full px-5 py-4 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-2.5 py-2.5 border border-slate-300 rounded-input focus:outline-none focus:ring-2 focus:ring-primary-teal focus:border-transparent text-caption"
             />
 
             {/* Email */}
@@ -116,7 +118,7 @@ export const RegisterPage = () => {
               onChange={handleChange}
               placeholder="Email"
               required
-              className="w-full px-5 py-4 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-2.5 py-2.5 border border-slate-300 rounded-input focus:outline-none focus:ring-2 focus:ring-primary-teal focus:border-transparent text-caption"
             />
 
             {/* Password */}
@@ -127,7 +129,7 @@ export const RegisterPage = () => {
               onChange={handleChange}
               placeholder="Min. 8 characters"
               required
-              className="w-full px-5 py-4 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-2.5 py-2.5 border border-slate-300 rounded-input focus:outline-none focus:ring-2 focus:ring-primary-teal focus:border-transparent text-caption"
             />
 
             {/* Confirm Password */}
@@ -138,22 +140,22 @@ export const RegisterPage = () => {
               onChange={handleChange}
               placeholder="Confirm password"
               required
-              className="w-full px-5 py-4 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-2.5 py-2.5 border border-slate-300 rounded-input focus:outline-none focus:ring-2 focus:ring-primary-teal focus:border-transparent text-caption"
             />
 
             {/* Role Selection */}
             <div className="pt-2">
-              <p className="text-black font-medium mb-4">I am a</p>
+              <p className="text-primary-navy font-bold mb-4 text-body">I am a</p>
 
               <div className="grid grid-cols-2 gap-4">
                 {/* Candidate */}
                 <button
                   type="button"
                   onClick={() => setRole('candidate')}
-                  className={`py-4 rounded-2xl border font-medium text-lg transition ${
+                  className={`py-2.5 rounded-button border font-semibold text-body transition ${
                     role === 'candidate'
-                      ? 'border-blue-500 bg-blue-50 text-black'
-                      : 'border-slate-200 bg-white text-black'
+                      ? 'border-primary-teal bg-teal-light text-primary-navy'
+                      : 'border-slate-300 bg-white-primary text-primary-navy'
                   }`}
                 >
                   Candidate
@@ -163,10 +165,10 @@ export const RegisterPage = () => {
                 <button
                   type="button"
                   onClick={() => setRole('recruiter')}
-                  className={`py-4 rounded-2xl border font-medium text-lg transition ${
+                  className={`py-2.5 rounded-button border font-semibold text-body transition ${
                     role === 'recruiter'
-                      ? 'border-blue-500 bg-blue-50 text-black'
-                      : 'border-slate-200 bg-white text-black'
+                      ? 'border-primary-teal bg-teal-light text-primary-navy'
+                      : 'border-slate-300 bg-white-primary text-primary-navy'
                   }`}
                 >
                   Recruiter
@@ -178,13 +180,15 @@ export const RegisterPage = () => {
             <button
               type="submit"
               disabled={loading}
-              className="w-full mt-4 py-4 bg-black text-white rounded-2xl font-semibold text-lg hover:opacity-90 transition disabled:opacity-50"
+              className="w-full mt-4 py-2.5 bg-primary-teal text-white-primary rounded-button font-semibold text-body hover:bg-teal-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? 'Creating account...' : 'Create account'}
             </button>
           </form>
         </div>
       </div>
+      </div>
+      <Footer />
     </div>
   );
 };

@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { Footer } from '../components/Footer';
 
 /**
  * GitHub OAuth Callback Handler
@@ -25,12 +26,8 @@ export const GitHubCallbackPage = () => {
         // Handle errors
         if (error) {
           setAuthError(`GitHub authentication failed: ${error}`);
-          // Redirect back to profile if user is authenticated
-          if (authUser) {
-            navigate('/candidate/profile', { replace: true });
-          } else {
-            navigate('/login', { replace: true });
-          }
+          // Redirect back to login on error
+          navigate('/login', { replace: true });
           return;
         }
 
@@ -53,8 +50,12 @@ export const GitHubCallbackPage = () => {
               // Login with the updated user data that includes github_verified flag
               login(user, token);
               
-              // Redirect to profile for verification
-              navigate('/candidate/profile', { replace: true });
+              // Redirect to dashboard based on role
+              const dashboardRoute =
+                user.role === 'candidate'
+                  ? '/candidate/dashboard'
+                  : '/recruiter/dashboard';
+              navigate(dashboardRoute, { replace: true });
             } else {
               setAuthError('Failed to fetch user information');
               navigate('/login', { replace: true });
@@ -79,11 +80,14 @@ export const GitHubCallbackPage = () => {
   }, [searchParams, login, navigate, setAuthError, authUser]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-primary-light">
-      <div className="text-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-dark mx-auto mb-4"></div>
-        <p className="text-slate-600">Completing GitHub authentication...</p>
+    <div className="min-h-screen flex flex-col">
+      <div className="flex-grow flex items-center justify-center bg-primary-light">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-dark mx-auto mb-4"></div>
+          <p className="text-slate-600">Completing GitHub authentication...</p>
+        </div>
       </div>
+      <Footer />
     </div>
   );
 };

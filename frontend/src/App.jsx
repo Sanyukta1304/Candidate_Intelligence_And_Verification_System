@@ -23,7 +23,7 @@ function App() {
     <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
       <Navbar />
 
-      <main className="min-h-[calc(100vh-64px)]">
+      <main className="min-h-[calc(100vh-64px)]" style={{ backgroundColor: 'var(--color-bg-secondary)', color: 'var(--color-text-secondary)' }}>
         <Routes>
           {/* Public Routes */}
           <Route

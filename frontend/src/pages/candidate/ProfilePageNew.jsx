@@ -7,6 +7,7 @@ import { triggerScore } from '../../api/score.api';
 import { InlineSkillEditor } from '../../components/candidate/InlineSkillEditor';
 import { InlineResumeEditor } from '../../components/candidate/InlineResumeEditor';
 import { ResumeScoreDashboard } from '../../components/candidate/ResumeScoreDashboard';
+import { Footer } from '../../components/Footer';
 
 const ProfilePageNew = () => {
   const navigate = useNavigate();
@@ -469,7 +470,8 @@ const ProfilePageNew = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-gray-50 flex flex-col">
+      <div className="flex-grow py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
         {/* Success/Error Messages */}
@@ -1143,6 +1145,8 @@ const ProfilePageNew = () => {
           </div>
         </div>
       )}
+    </div>
+    <Footer />
     </div>
   );
 };

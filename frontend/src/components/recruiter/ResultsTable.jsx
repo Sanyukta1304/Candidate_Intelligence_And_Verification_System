@@ -144,11 +144,11 @@ export const ResultsTable = ({
                     )}
                   </div>
                 </td>
-                <td className="px-6 py-4 text-center">
+                <td className="action-cell">
                   <Link
                     to={`/recruiter/candidate/${candidate._id || candidate.id}`}
                     onClick={() => onView(candidate._id || candidate.id)}
-                    className="inline-flex items-center px-3 py-1.5 bg-primary-dark text-white text-xs font-medium rounded-lg hover:bg-slate-800 transition-colors"
+                    className="view-btn"
                   >
                     View
                   </Link>

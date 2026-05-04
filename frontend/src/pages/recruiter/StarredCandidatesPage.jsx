@@ -3,6 +3,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { recruiterService } from '../../api/recruiterService';
 import { CandidateCard } from '../../components/recruiter/CandidateCard';
 import { Card } from '../../components/UI';
+import { Footer } from '../../components/Footer';
 
 /**
  * StarredCandidatesPage
@@ -56,7 +57,8 @@ const StarredCandidatesPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-gray-50 flex flex-col">
+      <div className="flex-grow py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8">
@@ -119,6 +121,8 @@ const StarredCandidatesPage = () => {
           </div>
         )}
       </div>
+      </div>
+      <Footer />
     </div>
   );
 };

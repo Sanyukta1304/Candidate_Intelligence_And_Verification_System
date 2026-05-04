@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { recruiterService } from '../../api/recruiterService';
 import { Card, Button, Input } from '../../components/UI';
+import { Footer } from '../../components/Footer';
 
 /**
  * RecruiterProfilePage
@@ -88,7 +89,8 @@ const RecruiterProfilePage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-gray-50 flex flex-col">
+      <div className="flex-grow py-8">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8 flex items-center justify-between">
@@ -99,7 +101,8 @@ const RecruiterProfilePage = () => {
           {!isEditing && (
             <button
               onClick={() => setIsEditing(true)}
-              className="px-6 py-2 bg-primary-dark text-white font-medium rounded-lg hover:bg-slate-800 transition-colors"
+              className="px-6 py-2 bg-primary-teal text-white font-medium rounded-lg hover:opacity-90 transition-all"
+              style={{ backgroundColor: 'var(--color-primary-teal)', color: 'var(--color-white-primary)' }}
             >
               Edit Profile
             </button>
@@ -197,7 +200,8 @@ const RecruiterProfilePage = () => {
                   <button
                     onClick={handleSave}
                     disabled={saving}
-                    className="flex-1 px-6 py-3 bg-primary-dark text-white font-medium rounded-lg hover:bg-slate-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex-1 px-6 py-3 bg-primary-teal text-white font-medium rounded-lg hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    style={{ backgroundColor: 'var(--color-primary-teal)', color: 'var(--color-white-primary)' }}
                   >
                     {saving ? 'Saving...' : 'Save Changes'}
                   </button>
@@ -217,6 +221,8 @@ const RecruiterProfilePage = () => {
           </Card>
         )}
       </div>
+      </div>
+      <Footer />
     </div>
   );
 };

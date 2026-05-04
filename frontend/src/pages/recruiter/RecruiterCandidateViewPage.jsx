@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { recruiterService } from '../../api/recruiterService';
 import { Card } from '../../components/UI';
+import { Footer } from '../../components/Footer';
 
 /**
  * RecruiterCandidateViewPage
@@ -162,7 +163,8 @@ const RecruiterCandidateViewPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 py-8">
+    <div className="min-h-screen bg-slate-50 flex flex-col">
+      <div className="flex-grow py-8">
       <div className="max-w-5xl mx-auto px-4">
         {/* Back Button */}
         <button
@@ -872,6 +874,8 @@ const RecruiterCandidateViewPage = () => {
           </div>
         )}
       </div>
+      </div>
+      <Footer />
     </div>
   );
 };

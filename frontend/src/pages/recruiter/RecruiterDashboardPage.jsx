@@ -5,6 +5,7 @@ import { RecruiterStats } from '../../components/recruiter/RecruiterStats';
 import { ActivityFeed } from '../../components/recruiter/ActivityFeed';
 import { QuickLinks } from '../../components/recruiter/QuickLinks';
 import { PrivateRoute } from '../../components/PrivateRoute';
+import { Footer } from '../../components/Footer';
 
 /**
  * RecruiterDashboardPage
@@ -76,7 +77,8 @@ const RecruiterDashboardPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-gray-50 flex flex-col">
+      <div className="flex-grow py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8">
@@ -120,6 +122,8 @@ const RecruiterDashboardPage = () => {
           </div>
         </div>
       </div>
+      </div>
+      <Footer />
     </div>
   );
 };

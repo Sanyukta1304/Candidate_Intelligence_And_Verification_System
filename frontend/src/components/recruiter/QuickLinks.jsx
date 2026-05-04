@@ -1,50 +1,52 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Card } from '../UI';
 
 /**
  * QuickLinks Component
- * Shows quick action cards for common recruiter tasks
+ * Shows quick action items in a clean row list layout
  */
 export const QuickLinks = () => {
   const quickLinks = [
     {
-      label: 'Search Candidates',
-      description: 'Find and filter talented candidates',
-      icon: '🔍',
+      label: 'Search candidates',
+      description: 'Browse and filter verified talent by skills and credibility score',
       to: '/recruiter/search',
-      color: 'bg-blue-50',
-      textColor: 'text-blue-600',
     },
     {
-      label: 'Starred Candidates',
-      description: 'View your saved candidates',
-      icon: '⭐',
+      label: 'Starred candidates',
+      description: 'View your saved candidates and shortlisted profiles',
       to: '/recruiter/starred',
-      color: 'bg-yellow-50',
-      textColor: 'text-yellow-600',
     },
     {
-      label: 'Company Profile',
-      description: 'Update your company info',
-      icon: '🏢',
+      label: 'Company profile',
+      description: 'Manage your recruiter account and company information',
       to: '/recruiter/profile',
-      color: 'bg-purple-50',
-      textColor: 'text-purple-600',
     },
   ];
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <div className="space-y-3">
       {quickLinks.map((link, idx) => (
         <Link key={idx} to={link.to}>
-          <Card className={`p-4 hover:shadow-soft-lg transition-shadow cursor-pointer h-full`}>
-            <div className={`${link.color} w-12 h-12 rounded-lg flex items-center justify-center mb-3`}>
-              <span className="text-xl">{link.icon}</span>
+          <div 
+            className="p-4 rounded-lg cursor-pointer transition-all duration-200 border border-transparent"
+            style={{
+              backgroundColor: 'var(--color-bg-primary)',
+              color: 'var(--color-text-primary)',
+              borderColor: 'var(--color-border-light)'
+            }}
+          >
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                <h4 className="font-semibold text-sm mb-1" style={{ color: 'var(--color-text-primary)' }}>
+                  {link.label} →
+                </h4>
+                <p className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>
+                  {link.description}
+                </p>
+              </div>
             </div>
-            <h4 className={`font-semibold text-slate-900 mb-1`}>{link.label}</h4>
-            <p className="text-xs text-slate-600">{link.description}</p>
-          </Card>
+          </div>
         </Link>
       ))}
     </div>
