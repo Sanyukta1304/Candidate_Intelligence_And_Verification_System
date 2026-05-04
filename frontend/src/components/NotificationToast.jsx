@@ -31,22 +31,22 @@ export const NotificationToast = ({
       return {
         icon: '👁️',
         bgColor: 'bg-blue-50',
-        borderColor: 'border-blue-200',
+        borderColor: 'border-blue-300',
         textColor: 'text-blue-900'
       };
     } else if (notification.type === 'profile_starred') {
       return {
         icon: '⭐',
         bgColor: 'bg-yellow-50',
-        borderColor: 'border-yellow-200',
+        borderColor: 'border-yellow-300',
         textColor: 'text-yellow-900'
       };
     }
     return {
       icon: '📌',
-      bgColor: 'bg-slate-50',
-      borderColor: 'border-slate-200',
-      textColor: 'text-slate-900'
+      bgColor: 'bg-grey-mild',
+      borderColor: 'border-slate-300',
+      textColor: 'text-primary-navy'
     };
   };
 
@@ -54,16 +54,16 @@ export const NotificationToast = ({
 
   return (
     <div
-      className={`fixed top-4 right-4 max-w-sm ${style.bgColor} border ${style.borderColor} rounded-lg shadow-lg p-4 animate-slideInRight z-50`}
+      className={`fixed top-4 right-4 max-w-sm ${style.bgColor} border ${style.borderColor} rounded-card shadow-soft-lg p-4 animate-slideInRight z-50`}
     >
       <div className="flex items-start gap-3">
         <span className="text-2xl flex-shrink-0">{style.icon}</span>
         
         <div className="flex-1">
-          <p className={`${style.textColor} font-semibold`}>
+          <p className={`${style.textColor} font-bold text-body`}>
             {notification.message || notification.recruiter_name || 'New notification'}
           </p>
-          <p className="text-sm text-slate-600 mt-1">
+          <p className="text-caption text-slate-grey mt-1">
             {notification.company_name && `from ${notification.company_name}`}
           </p>
         </div>
@@ -81,14 +81,14 @@ export const NotificationToast = ({
 
       {/* Auto-dismiss progress bar */}
       {autoClose && (
-        <div className="mt-3 w-full bg-slate-200 rounded-full h-1 overflow-hidden">
+        <div className="mt-3 w-full bg-slate-300 rounded-full h-1 overflow-hidden">
           <div
             className={`h-full ${
               notification.type === 'profile_viewed'
                 ? 'bg-blue-500'
                 : notification.type === 'profile_starred'
                 ? 'bg-yellow-500'
-                : 'bg-slate-500'
+                : 'bg-primary-teal'
             } animate-shrink`}
             style={{ animation: `shrink ${duration}ms linear forwards` }}
           />

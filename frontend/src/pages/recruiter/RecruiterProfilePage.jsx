@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { recruiterService } from '../../api/recruiterService';
 import { Card, Button, Input } from '../../components/UI';
+import { Footer } from '../../components/Footer';
 
 /**
  * RecruiterProfilePage
@@ -88,7 +89,8 @@ const RecruiterProfilePage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-gray-50 flex flex-col">
+      <div className="flex-grow py-8">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8 flex items-center justify-between">
@@ -217,6 +219,8 @@ const RecruiterProfilePage = () => {
           </Card>
         )}
       </div>
+      </div>
+      <Footer />
     </div>
   );
 };

@@ -4,6 +4,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { candidateService } from '../../api/candidateService';
 import { useSocketNotifications } from '../../hooks/useSocketNotifications';
 import { ToastContainer } from '../../components/NotificationToast';
+import { Footer } from '../../components/Footer';
 
 export default function CandidateDashboardPage() {
   const navigate = useNavigate();
@@ -146,14 +147,15 @@ export default function CandidateDashboardPage() {
   const tier = getTierBadge(scoreCard?.total || 0);
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-gray-50 flex flex-col">
       {/* Real-time notification toasts */}
       <ToastContainer 
         notifications={notifications} 
         onDismiss={removeNotification}
       />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="flex-grow py-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-slate-900">Welcome back, {profile?.user_id?.username || 'Candidate'}!</h1>
@@ -336,6 +338,8 @@ export default function CandidateDashboardPage() {
           </div>
         </div>
       </div>
+      </div>
+      <Footer />
     </div>
   );
 }

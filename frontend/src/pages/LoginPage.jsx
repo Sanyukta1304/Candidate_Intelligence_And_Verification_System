@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { authService } from '../api/authService';
+import { Footer } from '../components/Footer';
 
 export const LoginPage = () => {
   const navigate = useNavigate();
@@ -34,10 +35,10 @@ export const LoginPage = () => {
 
       login(response.user, response.token);
 
-      // role based redirect
+      // role based redirect - direct to dashboard, not profile
       const dashboardRoute =
         response.user.role === 'candidate'
-          ? '/candidate/profile'
+          ? '/candidate/dashboard'
           : '/recruiter/dashboard';
 
       navigate(dashboardRoute);
@@ -51,21 +52,22 @@ export const LoginPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#F4F7FB] flex items-center justify-center px-4 py-12">
+    <div className="min-h-screen bg-grey-mild flex flex-col">
+      <div className="flex-grow flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-xl">
         {/* Card */}
-        <div className="bg-white border border-slate-200 rounded-3xl p-10 shadow-sm">
+        <div className="bg-white-primary border border-slate-300 rounded-card p-4 shadow-soft">
           {/* Header */}
           <div className="text-center mb-8">
-            <h1 className="text-4xl font-semibold text-black mb-3">
+            <h1 className="heading-2 text-primary-navy mb-3">
               Welcome back
             </h1>
 
-            <p className="text-slate-600">
+            <p className="text-body text-slate-grey">
               New here?{' '}
               <Link
                 to="/register"
-                className="text-blue-600 font-medium hover:underline"
+                className="text-primary-teal font-bold hover:underline"
               >
                 Create an account
               </Link>
@@ -74,8 +76,8 @@ export const LoginPage = () => {
 
           {/* Error Message */}
           {error && (
-            <div className="mb-6 p-4 rounded-xl border border-red-200 bg-red-50">
-              <p className="text-sm text-red-700">{error}</p>
+            <div className="mb-6 p-4 rounded-button border border-status-error bg-status-error">
+              <p className="text-caption text-status-error-text">{error}</p>
             </div>
           )}
 
@@ -89,7 +91,7 @@ export const LoginPage = () => {
               onChange={handleChange}
               placeholder="Email"
               required
-              className="w-full px-5 py-4 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-2.5 py-2.5 border border-slate-300 rounded-input focus:outline-none focus:ring-2 focus:ring-primary-teal focus:border-transparent text-caption"
             />
 
             {/* Password */}
@@ -100,14 +102,14 @@ export const LoginPage = () => {
               onChange={handleChange}
               placeholder="Password"
               required
-              className="w-full px-5 py-4 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-2.5 py-2.5 border border-slate-300 rounded-input focus:outline-none focus:ring-2 focus:ring-primary-teal focus:border-transparent text-caption"
             />
 
             {/* Forgot Password */}
             <div className="flex justify-end -mt-1">
               <Link
                 to="/forgot-password"
-                className="text-blue-600 text-sm font-medium hover:underline"
+                className="text-primary-teal text-caption font-bold hover:underline"
               >
                 Forgot password?
               </Link>
@@ -117,13 +119,15 @@ export const LoginPage = () => {
             <button
               type="submit"
               disabled={loading}
-              className="w-full mt-2 py-4 bg-black text-white rounded-2xl font-semibold text-lg hover:opacity-90 transition disabled:opacity-50"
+              className="w-full mt-2 py-2.5 bg-primary-teal text-white-primary rounded-button font-semibold text-body hover:bg-teal-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? 'Signing in...' : 'Log in'}
             </button>
           </form>
         </div>
       </div>
+      </div>
+      <Footer />
     </div>
   );
 };

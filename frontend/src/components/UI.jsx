@@ -2,7 +2,7 @@ import React from 'react';
 
 /**
  * Reusable Card Component
- * Used for consistent card styling throughout the app
+ * Follows Design System: White background, 8px radius, 16px padding, soft shadow
  */
 export const Card = ({
   children,
@@ -19,7 +19,7 @@ export const Card = ({
 
   return (
     <div
-      className={`bg-white rounded-xl border border-slate-200 ${shadowClass} p-6 ${className}`}
+      className={`bg-white-primary rounded-card border border-slate-300 ${shadowClass} p-4 ${className}`}
       onClick={onClick}
       {...props}
     >
@@ -30,6 +30,7 @@ export const Card = ({
 
 /**
  * Reusable Button Component
+ * Follows Design System: Primary (Teal), Secondary (Teal border), Tertiary (Grey)
  */
 export const Button = ({
   children,
@@ -41,21 +42,21 @@ export const Button = ({
 }) => {
   const variants = {
     primary:
-      'bg-primary-dark text-white hover:bg-slate-800 disabled:bg-slate-400',
+      'bg-primary-teal text-white-primary hover:bg-teal-600 disabled:bg-slate-400 disabled:cursor-not-allowed',
     secondary:
-      'bg-white text-primary-dark border-2 border-primary-dark hover:bg-primary-light',
-    outline: 'border border-slate-200 text-slate-700 hover:bg-primary-light',
+      'bg-white-primary text-primary-teal border-2 border-primary-teal hover:bg-teal-light disabled:bg-slate-100 disabled:cursor-not-allowed',
+    outline: 'border border-slate-300 text-slate-grey hover:bg-grey-mild disabled:bg-slate-100 disabled:cursor-not-allowed',
   };
 
   const sizes = {
-    sm: 'px-3 py-2 text-sm',
-    md: 'px-4 py-2.5 text-base',
-    lg: 'px-6 py-3 text-lg',
+    sm: 'px-3 py-2 text-xs',
+    md: 'px-4 py-2.5 text-sm',
+    lg: 'px-6 py-3 text-base',
   };
 
   return (
     <button
-      className={`font-semibold rounded-lg transition-colors disabled:cursor-not-allowed ${variants[variant]} ${sizes[size]} ${className}`}
+      className={`font-semibold rounded-button transition-colors ${variants[variant]} ${sizes[size]} ${className}`}
       disabled={loading}
       {...props}
     >
@@ -73,6 +74,7 @@ export const Button = ({
 
 /**
  * Reusable Input Component
+ * Follows Design System: 1px border, 6px radius, 10px padding, teal focus
  */
 export const Input = ({
   label,
@@ -84,18 +86,18 @@ export const Input = ({
   return (
     <div className="w-full">
       {label && (
-        <label className="block text-sm font-medium text-slate-700 mb-2">
+        <label className="block text-label text-primary-teal font-bold mb-2">
           {label}
         </label>
       )}
       <input
         type={type}
-        className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-dark focus:border-transparent transition-all ${
-          error ? 'border-red-500' : 'border-slate-200'
+        className={`w-full px-2.5 py-2.5 border rounded-input focus:outline-none focus:ring-2 focus:ring-primary-teal focus:border-transparent transition-all font-sans text-caption ${
+          error ? 'border-status-error' : 'border-slate-300'
         } ${className}`}
         {...props}
       />
-      {error && <p className="text-red-600 text-sm mt-1">{error}</p>}
+      {error && <p className="text-status-error-text text-caption mt-1">{error}</p>}
     </div>
   );
 };

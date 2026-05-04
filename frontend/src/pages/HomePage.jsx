@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { Footer } from '../components/Footer';
 
 export const HomePage = () => {
   const { isAuthenticated } = useAuth();
@@ -11,25 +12,25 @@ export const HomePage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white-primary">
       {/* HERO SECTION */}
-      <section className="bg-[#F4F7FB] border-b border-slate-200">
+      <section className="bg-grey-mild border-b border-slate-300">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
           <div className="text-center max-w-4xl mx-auto">
             {/* Badge */}
-            <div className="inline-block px-5 py-2 rounded-full bg-blue-100 text-blue-600 text-sm font-medium mb-8">
+            <div className="inline-block px-5 py-2 rounded-full bg-teal-light text-primary-teal text-caption font-bold mb-8">
               Candidate Intelligence Platform
             </div>
 
             {/* Heading */}
-            <h1 className="text-5xl md:text-6xl font-bold text-black leading-tight mb-6">
+            <h1 className="text-heading-1 md:text-5xl font-bold text-primary-navy leading-tight mb-6">
               Beyond the CV.
               <br />
               Data-Driven Talent Verification.
             </h1>
 
             {/* Subtext */}
-            <p className="text-lg text-slate-600 max-w-3xl mx-auto leading-relaxed mb-10">
+            <p className="text-body text-slate-grey max-w-3xl mx-auto leading-relaxed mb-10">
               A platform that scores candidates based on verified skills,
               GitHub contributions, and ATS-optimized resumes. Connect talent
               with recruiters through trust and transparency.
@@ -41,7 +42,7 @@ export const HomePage = () => {
                 {/* Candidate Button */}
                 <button
                   onClick={() => handleRoleRedirect('candidate')}
-                  className="px-10 py-4 bg-black text-white rounded-2xl font-semibold hover:opacity-90 transition"
+                  className="px-10 py-4 bg-primary-teal text-white-primary rounded-button font-semibold hover:bg-teal-600 transition text-caption"
                 >
                   I am a candidate →
                 </button>
@@ -49,7 +50,7 @@ export const HomePage = () => {
                 {/* Recruiter Button */}
                 <button
                   onClick={() => handleRoleRedirect('recruiter')}
-                  className="px-10 py-4 border border-slate-300 text-black rounded-2xl font-semibold hover:bg-white transition"
+                  className="px-10 py-4 border border-primary-teal text-primary-teal rounded-button font-semibold hover:bg-teal-light transition text-caption"
                 >
                   I am a recruiter →
                 </button>
@@ -60,9 +61,9 @@ export const HomePage = () => {
       </section>
 
       {/* HOW IT WORKS */}
-      <section className="py-20 bg-white">
+      <section className="py-20 bg-white-primary">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <p className="text-center text-sm tracking-[0.2em] text-slate-500 mb-12 uppercase">
+          <p className="text-center text-label text-slate-grey mb-12 uppercase tracking-wider">
             How It Works
           </p>
 
@@ -95,17 +96,17 @@ export const HomePage = () => {
             ].map((item, index) => (
               <div
                 key={index}
-                className="bg-[#F7F9FC] rounded-2xl p-8 border border-slate-100 text-center"
+                className="bg-white-primary rounded-card p-4 border border-slate-300 text-center shadow-soft"
               >
-                <h2 className="text-4xl font-semibold text-black mb-6">
+                <h2 className="text-2xl font-bold text-primary-teal mb-6">
                   {item.number}
                 </h2>
 
-                <h3 className="text-lg font-semibold text-black mb-3">
+                <h3 className="heading-4 text-primary-navy mb-3">
                   {item.title}
                 </h3>
 
-                <p className="text-sm text-slate-600 leading-relaxed">
+                <p className="text-caption text-slate-grey leading-relaxed">
                   {item.desc}
                 </p>
               </div>
@@ -115,19 +116,19 @@ export const HomePage = () => {
       </section>
 
       {/* LOWER SPLIT SECTION */}
-      <section className="bg-[#F4F7FB] border-y border-slate-200">
+      <section className="bg-grey-mild border-y border-slate-300">
         <div className="max-w-7xl mx-auto grid md:grid-cols-2">
           {/* Left Side */}
-          <div className="p-12 border-r border-slate-200">
-            <p className="text-sm uppercase tracking-wider text-blue-600 font-medium mb-5">
+          <div className="p-12 border-r border-slate-300">
+            <p className="text-label text-primary-teal font-bold mb-5 uppercase tracking-wider">
               For Candidates
             </p>
 
-            <h2 className="text-3xl font-semibold text-black mb-4">
+            <h2 className="heading-3 text-primary-navy mb-4">
               Prove what you can build
             </h2>
 
-            <p className="text-slate-600 leading-relaxed mb-8 max-w-lg">
+            <p className="text-body text-slate-grey leading-relaxed mb-8 max-w-lg">
               Showcase your skills through verified GitHub projects and get
               scored on real contributions. Stand out with credibility, not
               just keywords.
@@ -136,7 +137,7 @@ export const HomePage = () => {
             {!isAuthenticated && (
               <button
                 onClick={() => handleRoleRedirect('candidate')}
-                className="inline-block px-8 py-4 border border-slate-300 rounded-2xl font-medium hover:bg-white transition"
+                className="inline-block px-8 py-4 border border-primary-teal text-primary-teal rounded-button font-semibold hover:bg-teal-light transition text-caption"
               >
                 Create candidate profile →
               </button>
@@ -145,15 +146,15 @@ export const HomePage = () => {
 
           {/* Right Side */}
           <div className="p-12">
-            <p className="text-sm uppercase tracking-wider text-green-600 font-medium mb-5">
+            <p className="text-label text-primary-teal font-bold mb-5 uppercase tracking-wider">
               For Recruiters
             </p>
 
-            <h2 className="text-3xl font-semibold text-black mb-4">
+            <h2 className="heading-3 text-primary-navy mb-4">
               Find verified talent instantly
             </h2>
 
-            <p className="text-slate-600 leading-relaxed mb-8 max-w-lg">
+            <p className="text-body text-slate-grey leading-relaxed mb-8 max-w-lg">
               Search candidates by credibility score, filter by verified GitHub
               profiles, and discover developers who can actually deliver.
             </p>
@@ -161,7 +162,7 @@ export const HomePage = () => {
             {!isAuthenticated && (
               <button
                 onClick={() => handleRoleRedirect('recruiter')}
-                className="inline-block px-8 py-4 border border-slate-300 rounded-2xl font-medium hover:bg-white transition"
+                className="inline-block px-8 py-4 border border-primary-teal text-primary-teal rounded-button font-semibold hover:bg-teal-light transition text-caption"
               >
                 Access recruiter dashboard →
               </button>
@@ -171,13 +172,7 @@ export const HomePage = () => {
       </section>
 
       {/* FOOTER */}
-      <footer className="bg-[#F7F9FC]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex justify-center items-center">
-          <div className="text-slate-600 text-sm">
-            © 2026 CredVerify. All rights reserved.
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 };
