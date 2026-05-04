@@ -101,7 +101,8 @@ const RecruiterProfilePage = () => {
           {!isEditing && (
             <button
               onClick={() => setIsEditing(true)}
-              className="px-6 py-2 bg-primary-dark text-white font-medium rounded-lg hover:bg-slate-800 transition-colors"
+              className="px-6 py-2 bg-primary-teal text-white font-medium rounded-lg hover:opacity-90 transition-all"
+              style={{ backgroundColor: 'var(--color-primary-teal)', color: 'var(--color-white-primary)' }}
             >
               Edit Profile
             </button>
@@ -199,7 +200,8 @@ const RecruiterProfilePage = () => {
                   <button
                     onClick={handleSave}
                     disabled={saving}
-                    className="flex-1 px-6 py-3 bg-primary-dark text-white font-medium rounded-lg hover:bg-slate-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex-1 px-6 py-3 bg-primary-teal text-white font-medium rounded-lg hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    style={{ backgroundColor: 'var(--color-primary-teal)', color: 'var(--color-white-primary)' }}
                   >
                     {saving ? 'Saving...' : 'Save Changes'}
                   </button>

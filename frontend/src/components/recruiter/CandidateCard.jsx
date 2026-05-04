@@ -112,7 +112,8 @@ export const CandidateCard = ({
         {/* View Profile Button */}
         <Link
           to={`/recruiter/candidate/${candidate._id || candidate.id}`}
-          className="w-full block text-center px-4 py-2.5 bg-primary-dark text-white font-medium rounded-lg hover:bg-slate-800 transition-colors"
+          className="w-full block text-center px-4 py-2.5 bg-primary-teal text-white font-medium rounded-lg hover:opacity-90 transition-all"
+          style={{ backgroundColor: 'var(--color-primary-teal)', color: 'var(--color-white-primary)' }}
         >
           View Profile
         </Link>

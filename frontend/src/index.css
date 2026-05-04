@@ -532,6 +532,43 @@ tbody td {
   color: var(--color-text-secondary);
 }
 
+/* Action cell - ensures button visibility */
+td.action-cell {
+  text-align: center;
+  min-width: 100px;
+  padding: 12px !important;
+}
+
+/* View button styling - ensures full visibility */
+.view-btn, a[class*="view"] {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 16px;
+  background-color: var(--color-primary-teal);
+  color: var(--color-white-primary);
+  border: none;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  position: relative;
+  z-index: 1;
+}
+
+.view-btn:hover, a[class*="view"]:hover {
+  background-color: #0a7a6f;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(13, 148, 136, 0.3);
+  color: var(--color-white-primary);
+}
+
+.view-btn:active, a[class*="view"]:active {
+  transform: translateY(0);
+}
+
 /* ========== SCROLLBAR STYLING ========== */
 ::-webkit-scrollbar {
   width: 8px;
