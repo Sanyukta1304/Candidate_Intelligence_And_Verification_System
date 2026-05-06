@@ -14,8 +14,8 @@ export const Navbar = () => {
   };
 
   return (
-    <nav className="bg-primary-navy border-b border-slate-300 sticky top-0 z-50 shadow-soft w-full" style={{ backgroundColor: 'var(--color-navbar-bg)', borderBottomColor: 'var(--color-border)' }}>
-      <div className="container">
+    <nav className="bg-primary-navy border-b border-slate-300 sticky top-0 z-50 shadow-soft" style={{ backgroundColor: 'var(--color-navbar-bg)', borderBottomColor: 'var(--color-border)' }}>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="h-20 flex items-center justify-between">
           {/* Logo */}
           <Link to="/" className="text-heading-3 font-bold flex-shrink-0" style={{ color: 'var(--color-navbar-text)' }}>
@@ -43,7 +43,7 @@ export const Navbar = () => {
 
               <Link
                 to="/register"
-                className="px-6 py-2.5 bg-primary-teal text-white-primary rounded-button font-semibold hover:bg-teal-600 transition text-navbar"
+                className="px-6 py-2.5 bg-teal-500 text-white rounded-button font-semibold hover:bg-teal-600 transition text-navbar"
               >
                 Register
               </Link>
@@ -98,7 +98,7 @@ export const Navbar = () => {
               </Link>
 
               {/* Circular Profile Avatar */}
-              <div className="flex items-center justify-center w-10 h-10 rounded-full bg-primary-teal text-white-primary font-semibold text-sm cursor-pointer hover:bg-teal-600 transition flex-shrink-0">
+              <div className="flex items-center justify-center w-10 h-10 rounded-full bg-teal-500 text-white font-semibold text-sm cursor-pointer hover:bg-teal-600 transition flex-shrink-0">
                 {user?.username?.charAt(0).toUpperCase() || 'U'}
               </div>
 
